@@ -13,6 +13,8 @@ import About from "./pages/About";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import Deposit from "./pages/Deposit";
+import Withdraw from "./pages/Withdraw";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/deposit" 
+              element={
+                <ProtectedRoute>
+                  <Deposit />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/withdraw" 
+              element={
+                <ProtectedRoute>
+                  <Withdraw />
                 </ProtectedRoute>
               } 
             />
