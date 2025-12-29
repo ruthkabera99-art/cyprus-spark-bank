@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Shield, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,26 +14,27 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login, isAuthenticated } = useAuth();
+  const { signIn, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Get return URL from location state
   const from = location.state?.from?.pathname || '/dashboard';
 
-  // If already authenticated, redirect to dashboard
-  if (isAuthenticated) {
-    navigate('/dashboard', { replace: true });
-    return null;
-  }
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await login(email, password);
+    const { error } = await signIn(email, password);
 
-    if (result.success) {
+    if (!error) {
       toast({
         title: 'Welcome back!',
         description: 'You have successfully signed in.',
@@ -42,13 +43,21 @@ const Login = () => {
     } else {
       toast({
         title: 'Login Failed',
-        description: result.message,
+        description: error.message || 'Invalid email or password.',
         variant: 'destructive',
       });
     }
 
     setIsLoading(false);
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex">
@@ -68,17 +77,6 @@ const Login = () => {
 
           <h2 className="text-3xl font-serif font-bold text-foreground mb-2">Welcome Back</h2>
           <p className="text-muted-foreground mb-8">Sign in to access your account</p>
-
-          {/* Demo Credentials Box */}
-          <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
-            <p className="text-sm font-medium text-primary mb-2">Demo Credentials</p>
-            <p className="text-xs text-muted-foreground">
-              Email: <code className="bg-background px-1 rounded">demo@securebank.com</code>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Password: <code className="bg-background px-1 rounded">demo123</code>
-            </p>
-          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">

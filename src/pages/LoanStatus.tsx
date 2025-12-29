@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLoanApplications } from '@/hooks/useLoanApplications';
 import { 
   Shield, 
   ArrowLeft, 
@@ -20,7 +21,8 @@ import {
   HardDrive,
   Coins,
   Package,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,13 +31,15 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { type LoanApplication } from '@/lib/mockData';
+import { type LoanApplication } from '@/hooks/useLoanApplications';
 
 const statusConfig = {
   pending: { label: 'Pending', icon: Clock, color: 'bg-warning text-warning-foreground', textColor: 'text-warning' },
   under_review: { label: 'Under Review', icon: Search, color: 'bg-primary text-primary-foreground', textColor: 'text-primary' },
   approved: { label: 'Approved', icon: CheckCircle2, color: 'bg-success text-success-foreground', textColor: 'text-success' },
   rejected: { label: 'Rejected', icon: XCircle, color: 'bg-destructive text-destructive-foreground', textColor: 'text-destructive' },
+  active: { label: 'Active', icon: CheckCircle2, color: 'bg-success text-success-foreground', textColor: 'text-success' },
+  paid_off: { label: 'Paid Off', icon: CheckCircle2, color: 'bg-muted text-muted-foreground', textColor: 'text-muted-foreground' },
 };
 
 const collateralIcons: Record<string, React.ElementType> = {
@@ -48,19 +52,28 @@ const collateralIcons: Record<string, React.ElementType> = {
 
 const LoanStatus = () => {
   const { user } = useAuth();
+  const { data: loans, isLoading } = useLoanApplications();
   const [selectedLoan, setSelectedLoan] = useState<LoanApplication | null>(null);
   const [activeTab, setActiveTab] = useState('all');
 
   if (!user) return null;
 
-  const loans = user.loanApplications || [];
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const loanList = loans || [];
   
   const filteredLoans = activeTab === 'all' 
-    ? loans 
-    : loans.filter(loan => loan.status === activeTab);
+    ? loanList 
+    : loanList.filter(loan => loan.status === activeTab);
 
-  const activeLoan = loans.find(l => l.status === 'approved');
-  const pendingCount = loans.filter(l => l.status === 'pending' || l.status === 'under_review').length;
+  const activeLoan = loanList.find(l => l.status === 'approved' || l.status === 'active');
+  const pendingCount = loanList.filter(l => l.status === 'pending' || l.status === 'under_review').length;
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', { 
@@ -112,7 +125,7 @@ const LoanStatus = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Applications</p>
-                  <p className="text-2xl font-bold">{loans.length}</p>
+                  <p className="text-2xl font-bold">{loanList.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -138,7 +151,7 @@ const LoanStatus = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Active Loans</p>
-                  <p className="text-2xl font-bold">{loans.filter(l => l.status === 'approved').length}</p>
+                  <p className="text-2xl font-bold">{loanList.filter(l => l.status === 'approved' || l.status === 'active').length}</p>
                 </div>
               </div>
             </CardContent>
@@ -152,7 +165,7 @@ const LoanStatus = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Borrowed</p>
                   <p className="text-2xl font-bold">
-                    ${loans.filter(l => l.status === 'approved').reduce((sum, l) => sum + l.amount, 0).toLocaleString()}
+                    ${loanList.filter(l => l.status === 'approved' || l.status === 'active').reduce((sum, l) => sum + Number(l.amount), 0).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -168,34 +181,34 @@ const LoanStatus = () => {
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge className={statusConfig.approved.color}>
+                      <Badge className={statusConfig[activeLoan.status].color}>
                         <CheckCircle2 className="w-3 h-3 mr-1" />
                         Active Loan
                       </Badge>
-                      <span className="text-sm text-muted-foreground">#{activeLoan.id}</span>
+                      <span className="text-sm text-muted-foreground">#{activeLoan.id.substring(0, 8)}</span>
                     </div>
-                    <h3 className="text-2xl font-bold mb-1">${activeLoan.amount.toLocaleString()}</h3>
+                    <h3 className="text-2xl font-bold mb-1">${Number(activeLoan.amount).toLocaleString()}</h3>
                     <p className="text-muted-foreground">{activeLoan.purpose}</p>
                   </div>
                   
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Remaining Balance</p>
-                      <p className="text-lg font-bold">${activeLoan.remainingBalance?.toLocaleString()}</p>
+                      <p className="text-lg font-bold">${(Number(activeLoan.amount) - Number(activeLoan.amount_paid)).toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Next Payment</p>
-                      <p className="text-lg font-bold">${activeLoan.nextPaymentAmount?.toFixed(2)}</p>
+                      <p className="text-sm text-muted-foreground">Monthly Payment</p>
+                      <p className="text-lg font-bold">${Number(activeLoan.monthly_payment).toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Due Date</p>
-                      <p className="text-lg font-bold">{activeLoan.nextPaymentDate && formatDate(activeLoan.nextPaymentDate)}</p>
+                      <p className="text-sm text-muted-foreground">Next Due Date</p>
+                      <p className="text-lg font-bold">{activeLoan.next_payment_date ? formatDate(activeLoan.next_payment_date) : 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Progress</p>
                       <div className="flex items-center gap-2">
-                        <Progress value={(activeLoan.paidPayments! / activeLoan.totalPayments!) * 100} className="h-2 flex-1" />
-                        <span className="text-sm font-medium">{activeLoan.paidPayments}/{activeLoan.totalPayments}</span>
+                        <Progress value={(Number(activeLoan.amount_paid) / Number(activeLoan.amount)) * 100} className="h-2 flex-1" />
+                        <span className="text-sm font-medium">{Math.round((Number(activeLoan.amount_paid) / Number(activeLoan.amount)) * 100)}%</span>
                       </div>
                     </div>
                   </div>
@@ -242,7 +255,7 @@ const LoanStatus = () => {
                 {filteredLoans.map(loan => {
                   const status = statusConfig[loan.status];
                   const StatusIcon = status.icon;
-                  const CollateralIcon = collateralIcons[loan.collateralType];
+                  const CollateralIcon = collateralIcons[loan.collateral_type];
                   
                   return (
                     <div 
@@ -256,19 +269,19 @@ const LoanStatus = () => {
                         </div>
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold">${loan.amount.toLocaleString()}</h4>
+                            <h4 className="font-semibold">${Number(loan.amount).toLocaleString()}</h4>
                             <Badge variant="outline" className="text-xs">
-                              {loan.termMonths}mo @ {loan.interestRate}%
+                              {loan.term_months}mo @ {loan.interest_rate}%
                             </Badge>
                           </div>
                           <div className="flex items-center gap-3 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
-                              {formatDate(loan.applicationDate)}
+                              {formatDate(loan.submitted_at)}
                             </span>
                             <span className="flex items-center gap-1">
                               <CollateralIcon className="w-3 h-3" />
-                              {loan.collateralType.replace('_', ' ')}
+                              {loan.collateral_type.replace('_', ' ')}
                             </span>
                           </div>
                         </div>
@@ -295,13 +308,13 @@ const LoanStatus = () => {
               <>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <span>Loan Application #{selectedLoan.id}</span>
+                    <span>Loan Application #{selectedLoan.id.substring(0, 8)}</span>
                     <Badge className={statusConfig[selectedLoan.status].color}>
                       {statusConfig[selectedLoan.status].label}
                     </Badge>
                   </DialogTitle>
                   <DialogDescription>
-                    Applied on {formatDate(selectedLoan.applicationDate)}
+                    Applied on {formatDate(selectedLoan.submitted_at)}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -311,25 +324,25 @@ const LoanStatus = () => {
                     <Card className="bg-muted/50">
                       <CardContent className="p-4">
                         <p className="text-sm text-muted-foreground mb-1">Loan Amount</p>
-                        <p className="text-2xl font-bold">${selectedLoan.amount.toLocaleString()}</p>
+                        <p className="text-2xl font-bold">${Number(selectedLoan.amount).toLocaleString()}</p>
                       </CardContent>
                     </Card>
                     <Card className="bg-muted/50">
                       <CardContent className="p-4">
                         <p className="text-sm text-muted-foreground mb-1">Monthly Payment</p>
-                        <p className="text-2xl font-bold">${selectedLoan.monthlyPayment.toFixed(2)}</p>
+                        <p className="text-2xl font-bold">${Number(selectedLoan.monthly_payment).toFixed(2)}</p>
                       </CardContent>
                     </Card>
                     <Card className="bg-muted/50">
                       <CardContent className="p-4">
                         <p className="text-sm text-muted-foreground mb-1">Term</p>
-                        <p className="text-lg font-semibold">{selectedLoan.termMonths} months</p>
+                        <p className="text-lg font-semibold">{selectedLoan.term_months} months</p>
                       </CardContent>
                     </Card>
                     <Card className="bg-muted/50">
                       <CardContent className="p-4">
                         <p className="text-sm text-muted-foreground mb-1">Interest Rate</p>
-                        <p className="text-lg font-semibold">{selectedLoan.interestRate}% APR</p>
+                        <p className="text-lg font-semibold">{selectedLoan.interest_rate}% APR</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -348,106 +361,41 @@ const LoanStatus = () => {
                         <div className="grid sm:grid-cols-2 gap-3 text-sm">
                           <div>
                             <span className="text-muted-foreground">Type:</span>
-                            <span className="font-medium ml-2">{selectedLoan.collateralType.replace('_', ' ')}</span>
+                            <span className="font-medium ml-2">{selectedLoan.collateral_type.replace('_', ' ')}</span>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Value:</span>
-                            <span className="font-medium ml-2">${selectedLoan.collateralValue.toLocaleString()}</span>
+                            <span className="font-medium ml-2">${Number(selectedLoan.collateral_value).toLocaleString()}</span>
                           </div>
-                          <div className="sm:col-span-2">
-                            <span className="text-muted-foreground">Description:</span>
-                            <p className="font-medium mt-1">{selectedLoan.collateralDescription}</p>
-                          </div>
+                          {selectedLoan.collateral_description && (
+                            <div className="sm:col-span-2">
+                              <span className="text-muted-foreground">Description:</span>
+                              <p className="font-medium mt-1">{selectedLoan.collateral_description}</p>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
                   </div>
 
                   {/* Crypto Collateral Details */}
-                  {selectedLoan.cryptoCollateral && (
+                  {selectedLoan.crypto_currency && selectedLoan.crypto_amount && (
                     <Alert className="border-warning bg-warning/10">
                       <Bitcoin className="h-4 w-4" />
-                      <AlertTitle className="flex items-center gap-2">
-                        Crypto Collateral
-                        {selectedLoan.cryptoCollateral.currentUsdValue < selectedLoan.cryptoCollateral.usdValueAtLock && (
-                          <Badge variant="destructive" className="text-xs">
-                            <TrendingDown className="w-3 h-3 mr-1" />
-                            Value Decreased
-                          </Badge>
-                        )}
-                      </AlertTitle>
+                      <AlertTitle>Crypto Collateral</AlertTitle>
                       <AlertDescription>
                         <div className="grid sm:grid-cols-2 gap-3 mt-3 text-sm">
                           <div>
                             <span className="text-muted-foreground">Locked Amount:</span>
-                            <span className="font-medium ml-2">{selectedLoan.cryptoCollateral.amount} {selectedLoan.cryptoCollateral.currency}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Current Value:</span>
-                            <span className="font-medium ml-2">${selectedLoan.cryptoCollateral.currentUsdValue.toLocaleString()}</span>
+                            <span className="font-medium ml-2">{selectedLoan.crypto_amount} {selectedLoan.crypto_currency}</span>
                           </div>
                           <div>
                             <span className="text-muted-foreground">LTV Ratio:</span>
-                            <span className="font-medium ml-2">{selectedLoan.cryptoCollateral.ltv}%</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Liquidation Threshold:</span>
-                            <span className="font-medium ml-2">{selectedLoan.cryptoCollateral.liquidationThreshold}%</span>
+                            <span className="font-medium ml-2">{selectedLoan.ltv_ratio}%</span>
                           </div>
                         </div>
                       </AlertDescription>
                     </Alert>
-                  )}
-
-                  {/* Approved Loan Details */}
-                  {selectedLoan.status === 'approved' && selectedLoan.remainingBalance !== undefined && (
-                    <div>
-                      <h4 className="font-semibold mb-2">Repayment Status</h4>
-                      <Card className="bg-success/5 border-success/20">
-                        <CardContent className="p-4">
-                          <div className="grid sm:grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Disbursed Amount</p>
-                              <p className="text-lg font-bold">${selectedLoan.disbursedAmount?.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Remaining Balance</p>
-                              <p className="text-lg font-bold">${selectedLoan.remainingBalance?.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Next Payment Date</p>
-                              <p className="text-lg font-bold">{selectedLoan.nextPaymentDate && formatDate(selectedLoan.nextPaymentDate)}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Payment Progress</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Progress value={(selectedLoan.paidPayments! / selectedLoan.totalPayments!) * 100} className="h-2 flex-1" />
-                                <span className="text-sm font-medium">{selectedLoan.paidPayments}/{selectedLoan.totalPayments}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <Button className="w-full mt-4 gradient-primary">Make Payment</Button>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
-
-                  {/* Documents */}
-                  {selectedLoan.collateralDocuments.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold mb-2">Uploaded Documents</h4>
-                      <div className="space-y-2">
-                        {selectedLoan.collateralDocuments.map(doc => (
-                          <div key={doc.id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <FileText className="w-5 h-5 text-primary" />
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{doc.name}</p>
-                              <p className="text-xs text-muted-foreground">Uploaded {formatDate(doc.uploadedAt)}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   )}
                 </div>
               </>

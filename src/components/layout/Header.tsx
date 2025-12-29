@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Shield, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,12 +25,16 @@ const navItems = [
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, signOut } = useAuth();
+  const { data: profile } = useProfile();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogout = () => {
-    logout();
+  const displayName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
+  const fullName = profile?.full_name || user?.email || '';
+
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
     toast({ title: 'Signed out', description: 'You have been signed out successfully' });
   };
@@ -75,12 +80,12 @@ export function Header() {
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                       <User className="w-4 h-4 text-primary" />
                     </div>
-                    <span className="hidden sm:inline">{user.firstName}</span>
+                    <span className="hidden sm:inline">{displayName}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-popover border border-border">
                   <div className="px-3 py-2">
-                    <p className="font-medium text-foreground">{user.firstName} {user.lastName}</p>
+                    <p className="font-medium text-foreground">{fullName}</p>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
@@ -140,7 +145,7 @@ export function Header() {
                 {isAuthenticated && user ? (
                   <>
                     <div className="px-4 py-2">
-                      <p className="font-medium text-foreground">{user.firstName} {user.lastName}</p>
+                      <p className="font-medium text-foreground">{fullName}</p>
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
                     <Button variant="outline" asChild onClick={() => setIsMenuOpen(false)}>
