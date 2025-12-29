@@ -1,24 +1,53 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Shield, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Shield, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Get return URL from location state
+  const from = location.state?.from?.pathname || '/dashboard';
+
+  // If already authenticated, redirect to dashboard
+  if (isAuthenticated) {
+    navigate('/dashboard', { replace: true });
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: 'Demo Mode',
-      description: 'This is a demo. Connect to a backend for full functionality.',
-    });
+    setIsLoading(true);
+
+    const result = await login(email, password);
+
+    if (result.success) {
+      toast({
+        title: 'Welcome back!',
+        description: 'You have successfully signed in.',
+      });
+      navigate(from, { replace: true });
+    } else {
+      toast({
+        title: 'Login Failed',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
+
+    setIsLoading(false);
   };
 
   return (
@@ -40,6 +69,17 @@ const Login = () => {
           <h2 className="text-3xl font-serif font-bold text-foreground mb-2">Welcome Back</h2>
           <p className="text-muted-foreground mb-8">Sign in to access your account</p>
 
+          {/* Demo Credentials Box */}
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
+            <p className="text-sm font-medium text-primary mb-2">Demo Credentials</p>
+            <p className="text-xs text-muted-foreground">
+              Email: <code className="bg-background px-1 rounded">demo@securebank.com</code>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Password: <code className="bg-background px-1 rounded">demo123</code>
+            </p>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
@@ -50,6 +90,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -68,6 +109,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
@@ -89,9 +131,18 @@ const Login = () => {
               </label>
             </div>
 
-            <Button type="submit" className="w-full gradient-primary shadow-elegant group">
-              Sign In
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <Button type="submit" className="w-full gradient-primary shadow-elegant group" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </Button>
           </form>
 
