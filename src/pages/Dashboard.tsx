@@ -1,4 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
+import { useCryptoBalances } from '@/hooks/useCryptoBalances';
+import { useTransactions } from '@/hooks/useTransactions';
 import { 
   Wallet, 
   Bitcoin, 
@@ -12,7 +15,8 @@ import {
   Settings,
   LogOut,
   Copy,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,28 +29,65 @@ import { useToast } from '@/hooks/use-toast';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { data: cryptoBalances, isLoading: cryptoLoading } = useCryptoBalances();
+  const { data: transactions, isLoading: txLoading } = useTransactions(8);
   const { toast } = useToast();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
   if (!user) return null;
 
-  const totalCryptoValue = user.cryptoBalances.reduce((sum, c) => sum + c.usdValue, 0);
-  const totalBalance = user.traditionalBalance + totalCryptoValue;
+  const isLoading = profileLoading || cryptoLoading || txLoading;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const traditionalBalance = profile?.traditional_balance || 0;
+  const totalCryptoValue = cryptoBalances?.reduce((sum, c) => sum + c.usdValue, 0) || 0;
+  const totalBalance = traditionalBalance + totalCryptoValue;
+  const displayName = profile?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User';
+  const accountNumber = `SB-${user.id.substring(0, 8).toUpperCase()}`;
 
   const copyAccountNumber = () => {
-    navigator.clipboard.writeText(user.accountNumber);
+    navigator.clipboard.writeText(accountNumber);
     setCopied(true);
     toast({ title: 'Copied!', description: 'Account number copied to clipboard' });
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
     toast({ title: 'Signed out', description: 'You have been signed out successfully' });
   };
+
+  // Transform transactions for TransactionItem component
+  const formattedTransactions = transactions?.map(tx => ({
+    id: tx.id,
+    type: tx.type === 'loan_disbursement' ? 'loan' : tx.type === 'loan_payment' ? 'loan' : tx.type as any,
+    description: tx.description || `${tx.type} - ${tx.currency}`,
+    amount: tx.amount,
+    currency: tx.currency,
+    date: new Date(tx.created_at).toISOString().split('T')[0],
+    status: tx.status,
+    category: tx.category,
+  })) || [];
+
+  // Transform crypto balances for CryptoCard component
+  const formattedCrypto = cryptoBalances?.map(c => ({
+    currency: c.name,
+    symbol: c.currency,
+    balance: c.amount,
+    usdValue: c.usdValue,
+    icon: c.icon,
+  })) || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
@@ -84,10 +125,10 @@ const Dashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-serif font-bold text-foreground">
-              Welcome back, {user.firstName}!
+              Welcome back, {displayName}!
             </h1>
             <div className="flex items-center gap-2 mt-2">
-              <p className="text-muted-foreground">Account: {user.accountNumber}</p>
+              <p className="text-muted-foreground">Account: {accountNumber}</p>
               <button onClick={copyAccountNumber} className="text-muted-foreground hover:text-primary transition-colors">
                 {copied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
               </button>
@@ -111,7 +152,7 @@ const Dashboard = () => {
                   <div>
                     <p className="text-sm text-primary-foreground/80">Traditional Balance</p>
                     <p className="text-2xl font-bold text-primary-foreground">
-                      ${user.traditionalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      ${traditionalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 </div>
@@ -165,7 +206,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {user.cryptoBalances.map((crypto) => (
+              {formattedCrypto.map((crypto) => (
                 <CryptoCard key={crypto.symbol} crypto={crypto} />
               ))}
             </div>
@@ -226,11 +267,17 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="divide-y divide-border">
-              {user.transactions.slice(0, 8).map((tx) => (
-                <TransactionItem key={tx.id} transaction={tx} />
-              ))}
-            </div>
+            {formattedTransactions.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No transactions yet</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {formattedTransactions.map((tx) => (
+                  <TransactionItem key={tx.id} transaction={tx} />
+                ))}
+              </div>
+            )}
             <div className="mt-6 text-center">
               <Button variant="outline">View All Transactions</Button>
             </div>

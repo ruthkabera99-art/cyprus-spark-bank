@@ -1,42 +1,68 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Shield, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Shield, Eye, EyeOff, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-
-const accountTypes = [
-  { value: 'personal', label: 'Personal Checking' },
-  { value: 'savings', label: 'Savings Account' },
-  { value: 'business', label: 'Business Account' },
-];
+import { useAuth } from '@/contexts/AuthContext';
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
-    accountType: '',
     password: '',
   });
   const { toast } = useToast();
+  const { signUp, isAuthenticated, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: 'Demo Mode',
-      description: 'This is a demo. Connect to a backend for full functionality.',
-    });
+    setIsLoading(true);
+
+    const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+    const { error } = await signUp(formData.email, formData.password, fullName);
+
+    if (!error) {
+      toast({
+        title: 'Account Created!',
+        description: 'Please check your email to confirm your account, then sign in.',
+      });
+      navigate('/login');
+    } else {
+      toast({
+        title: 'Registration Failed',
+        description: error.message || 'Failed to create account.',
+        variant: 'destructive',
+      });
+    }
+
+    setIsLoading(false);
   };
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex">
@@ -95,6 +121,7 @@ const Register = () => {
                   value={formData.firstName}
                   onChange={(e) => handleChange('firstName', e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -105,6 +132,7 @@ const Register = () => {
                   value={formData.lastName}
                   onChange={(e) => handleChange('lastName', e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -118,35 +146,8 @@ const Register = () => {
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 required
+                disabled={isLoading}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+1 (555) 000-0000"
-                value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="accountType">Account Type</Label>
-              <Select onValueChange={(value) => handleChange('accountType', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select account type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accountTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2">
@@ -155,10 +156,12 @@ const Register = () => {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Create a strong password"
+                  placeholder="Create a strong password (min 6 characters)"
                   value={formData.password}
                   onChange={(e) => handleChange('password', e.target.value)}
                   required
+                  minLength={6}
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
@@ -171,7 +174,7 @@ const Register = () => {
             </div>
 
             <div className="flex items-start space-x-2">
-              <Checkbox id="terms" className="mt-1" />
+              <Checkbox id="terms" className="mt-1" required />
               <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed">
                 I agree to the{' '}
                 <a href="#" className="text-primary hover:underline">
@@ -184,9 +187,18 @@ const Register = () => {
               </label>
             </div>
 
-            <Button type="submit" className="w-full gradient-primary shadow-elegant group">
-              Open Account
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <Button type="submit" className="w-full gradient-primary shadow-elegant group" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                <>
+                  Open Account
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </Button>
           </form>
 
