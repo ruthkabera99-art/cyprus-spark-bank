@@ -14,16 +14,267 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      collateral_documents: {
+        Row: {
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          loan_application_id: string
+          storage_path: string
+          uploaded_at: string | null
+        }
+        Insert: {
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          loan_application_id: string
+          storage_path: string
+          uploaded_at?: string | null
+        }
+        Update: {
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          loan_application_id?: string
+          storage_path?: string
+          uploaded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collateral_documents_loan_application_id_fkey"
+            columns: ["loan_application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crypto_balances: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string
+          id: string
+          updated_at: string | null
+          user_id: string
+          wallet_address: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          currency: string
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          wallet_address?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      loan_applications: {
+        Row: {
+          amount: number
+          amount_paid: number | null
+          approved_at: string | null
+          collateral_description: string | null
+          collateral_type: Database["public"]["Enums"]["collateral_type"]
+          collateral_value: number
+          crypto_amount: number | null
+          crypto_currency: string | null
+          id: string
+          interest_rate: number
+          ltv_ratio: number | null
+          monthly_payment: number
+          next_payment_date: string | null
+          purpose: string
+          remaining_payments: number | null
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["loan_status"] | null
+          submitted_at: string | null
+          term_months: number
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          amount_paid?: number | null
+          approved_at?: string | null
+          collateral_description?: string | null
+          collateral_type: Database["public"]["Enums"]["collateral_type"]
+          collateral_value: number
+          crypto_amount?: number | null
+          crypto_currency?: string | null
+          id?: string
+          interest_rate: number
+          ltv_ratio?: number | null
+          monthly_payment: number
+          next_payment_date?: string | null
+          purpose: string
+          remaining_payments?: number | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["loan_status"] | null
+          submitted_at?: string | null
+          term_months: number
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          amount_paid?: number | null
+          approved_at?: string | null
+          collateral_description?: string | null
+          collateral_type?: Database["public"]["Enums"]["collateral_type"]
+          collateral_value?: number
+          crypto_amount?: number | null
+          crypto_currency?: string | null
+          id?: string
+          interest_rate?: number
+          ltv_ratio?: number | null
+          monthly_payment?: number
+          next_payment_date?: string | null
+          purpose?: string
+          remaining_payments?: number | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["loan_status"] | null
+          submitted_at?: string | null
+          term_months?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          traditional_balance: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          traditional_balance?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          traditional_balance?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          currency: string
+          description: string | null
+          id: string
+          network_fee: number | null
+          recipient_address: string | null
+          reference_id: string | null
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string | null
+          currency: string
+          description?: string | null
+          id?: string
+          network_fee?: number | null
+          recipient_address?: string | null
+          reference_id?: string | null
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          network_fee?: number | null
+          recipient_address?: string | null
+          reference_id?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      collateral_type:
+        | "real_estate"
+        | "vehicle"
+        | "equipment"
+        | "crypto"
+        | "other"
+      loan_status:
+        | "pending"
+        | "under_review"
+        | "approved"
+        | "rejected"
+        | "active"
+        | "paid_off"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +401,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      collateral_type: [
+        "real_estate",
+        "vehicle",
+        "equipment",
+        "crypto",
+        "other",
+      ],
+      loan_status: [
+        "pending",
+        "under_review",
+        "approved",
+        "rejected",
+        "active",
+        "paid_off",
+      ],
+    },
   },
 } as const
