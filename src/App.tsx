@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import Index from "./pages/Index";
 import PersonalBanking from "./pages/PersonalBanking";
 import BusinessBanking from "./pages/BusinessBanking";
@@ -17,6 +18,7 @@ import Deposit from "./pages/Deposit";
 import Withdraw from "./pages/Withdraw";
 import LoanApplication from "./pages/LoanApplication";
 import LoanStatus from "./pages/LoanStatus";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +57,10 @@ const App = () => (
             <Route 
               path="/dashboard/loans" 
               element={<ProtectedRoute><LoanStatus /></ProtectedRoute>} 
+            />
+            <Route 
+              path="/admin" 
+              element={<AdminRoute><AdminDashboard /></AdminRoute>} 
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
