@@ -52,6 +52,8 @@ export function TransactionItem({ transaction }: TransactionItemProps) {
         return <Badge variant="outline" className="text-yellow-500 border-yellow-500/30 bg-yellow-500/10">Pending</Badge>;
       case 'failed':
         return <Badge variant="outline" className="text-red-500 border-red-500/30 bg-red-500/10">Failed</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30 bg-muted/50">Cancelled</Badge>;
       default:
         return null;
     }

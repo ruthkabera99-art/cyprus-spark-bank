@@ -14,7 +14,7 @@ export interface Transaction {
   amount: number;
   currency: string;
   date: string;
-  status: 'completed' | 'pending' | 'failed';
+  status: 'completed' | 'pending' | 'failed' | 'cancelled';
   category: 'traditional' | 'crypto';
 }
 
