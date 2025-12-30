@@ -16,6 +16,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Deposit from "./pages/Deposit";
 import Withdraw from "./pages/Withdraw";
+import Transfer from "./pages/Transfer";
 import LoanApplication from "./pages/LoanApplication";
 import LoanStatus from "./pages/LoanStatus";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -49,6 +50,10 @@ const App = () => (
             <Route 
               path="/dashboard/withdraw" 
               element={<ProtectedRoute><Withdraw /></ProtectedRoute>} 
+            />
+            <Route 
+              path="/dashboard/transfer" 
+              element={<ProtectedRoute><Transfer /></ProtectedRoute>} 
             />
             <Route 
               path="/dashboard/apply-loan" 
