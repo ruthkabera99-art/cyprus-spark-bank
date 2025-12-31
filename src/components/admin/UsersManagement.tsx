@@ -19,8 +19,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search, Edit, Loader2, Users, DollarSign, Bitcoin } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Search, Edit, Loader2, Users, DollarSign, Shield, ShieldOff } from 'lucide-react';
 import { useAdminUsers, useUpdateUserBalance, useUpdateCryptoBalance, useUpdateUserProfile, type UserWithDetails } from '@/hooks/useAdminUsers';
+import { useToggleAdminRole } from '@/hooks/useRoleManagement';
+import { sendNotificationEmail } from '@/hooks/useNotificationEmail';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -29,6 +32,7 @@ export function UsersManagement() {
   const updateBalance = useUpdateUserBalance();
   const updateCryptoBalance = useUpdateCryptoBalance();
   const updateProfile = useUpdateUserProfile();
+  const toggleRole = useToggleAdminRole();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -110,6 +114,24 @@ export function UsersManagement() {
       setEditDialogOpen(false);
     } catch (error) {
       toast.error('Failed to update user');
+    }
+  };
+
+  const handleRoleToggle = async (user: UserWithDetails) => {
+    try {
+      await toggleRole.mutateAsync({ userId: user.id, currentRole: user.role });
+      const newRole = user.role === 'admin' ? 'user' : 'admin';
+      
+      // Send email notification
+      sendNotificationEmail({
+        type: 'role_changed',
+        userId: user.id,
+        data: { newRole },
+      });
+      
+      toast.success(`User ${user.role === 'admin' ? 'demoted to user' : 'promoted to admin'}`);
+    } catch (error) {
+      toast.error('Failed to update user role');
     }
   };
 
@@ -220,9 +242,23 @@ export function UsersManagement() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                          {user.role}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                            {user.role}
+                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <Switch
+                              checked={user.role === 'admin'}
+                              onCheckedChange={() => handleRoleToggle(user)}
+                              disabled={toggleRole.isPending}
+                            />
+                            {user.role === 'admin' ? (
+                              <Shield className="h-4 w-4 text-amber-500" />
+                            ) : (
+                              <ShieldOff className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell className="font-medium">
                         {formatCurrency(user.traditional_balance)}
