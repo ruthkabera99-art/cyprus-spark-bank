@@ -36,6 +36,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, MoreHorizontal, Loader2, CreditCard, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle, XCircle, Clock, Plus } from 'lucide-react';
 import { useAdminTransactions, useUpdateTransactionStatus, useDeleteTransaction, useCreateAdminTransaction, type TransactionWithUser } from '@/hooks/useAdminTransactions';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
+import { sendNotificationEmail } from '@/hooks/useNotificationEmail';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -79,8 +80,26 @@ export function TransactionsManagement() {
   });
 
   const handleStatusChange = async (id: string, status: string) => {
+    const tx = transactions?.find((t) => t.id === id);
     try {
       await updateStatus.mutateAsync({ id, status });
+      
+      // Send email notification for status change
+      if (tx) {
+        sendNotificationEmail({
+          type: 'transaction_status_changed',
+          userId: tx.user_id,
+          data: {
+            transactionId: tx.id,
+            transactionType: tx.type,
+            amount: tx.amount,
+            currency: tx.currency,
+            oldStatus: tx.status,
+            status,
+          },
+        });
+      }
+      
       toast.success(`Transaction status updated to ${status}`);
     } catch (error) {
       toast.error('Failed to update transaction status');
@@ -111,7 +130,7 @@ export function TransactionsManagement() {
     }
 
     try {
-      await createTx.mutateAsync({
+      const created = await createTx.mutateAsync({
         user_id: newTx.user_id,
         type: newTx.type,
         category: newTx.category,
@@ -120,6 +139,19 @@ export function TransactionsManagement() {
         status: newTx.status,
         description: newTx.description || `Admin ${newTx.type}`,
       });
+      
+      // Send email notification for new transaction
+      sendNotificationEmail({
+        type: 'transaction_created',
+        userId: newTx.user_id,
+        data: {
+          transactionType: newTx.type,
+          amount: parseFloat(newTx.amount),
+          currency: newTx.currency,
+          status: newTx.status,
+        },
+      });
+      
       toast.success('Transaction created successfully');
       setCreateDialogOpen(false);
       setNewTx({
