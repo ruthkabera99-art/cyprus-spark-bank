@@ -38,7 +38,14 @@ export function useAdminUsers() {
         .from('crypto_balances')
         .select('user_id, currency, amount');
 
-      const roleMap = new Map(roles?.map((r) => [r.user_id, r.role]) || []);
+      // Handle multiple roles - check if user has admin role
+      const roleMap = new Map<string, 'admin' | 'user'>();
+      roles?.forEach((r) => {
+        const currentRole = roleMap.get(r.user_id);
+        if (r.role === 'admin' || !currentRole) {
+          roleMap.set(r.user_id, r.role);
+        }
+      });
       const cryptoMap = new Map<string, { currency: string; amount: number | null }[]>();
       
       cryptoBalances?.forEach((cb) => {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -24,23 +25,45 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreHorizontal, Loader2, CreditCard, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { useAdminTransactions, useUpdateTransactionStatus, useDeleteTransaction, type TransactionWithUser } from '@/hooks/useAdminTransactions';
+import { Search, MoreHorizontal, Loader2, CreditCard, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle, XCircle, Clock, Plus } from 'lucide-react';
+import { useAdminTransactions, useUpdateTransactionStatus, useDeleteTransaction, useCreateAdminTransaction, type TransactionWithUser } from '@/hooks/useAdminTransactions';
+import { useAdminUsers } from '@/hooks/useAdminUsers';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 export function TransactionsManagement() {
   const { data: transactions, isLoading } = useAdminTransactions();
+  const { data: users } = useAdminUsers();
   const updateStatus = useUpdateTransactionStatus();
   const deleteTx = useDeleteTransaction();
+  const createTx = useCreateAdminTransaction();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [txToDelete, setTxToDelete] = useState<string | null>(null);
+  
+  // Create transaction dialog state
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newTx, setNewTx] = useState({
+    user_id: '',
+    type: 'deposit',
+    category: 'traditional',
+    currency: 'USD',
+    amount: '',
+    status: 'completed',
+    description: '',
+  });
 
   const filteredTransactions = transactions?.filter((tx) => {
     const matchesSearch =
@@ -78,6 +101,38 @@ export function TransactionsManagement() {
       setTxToDelete(null);
     } catch (error) {
       toast.error('Failed to delete transaction');
+    }
+  };
+
+  const handleCreateTransaction = async () => {
+    if (!newTx.user_id || !newTx.amount) {
+      toast.error('Please select a user and enter an amount');
+      return;
+    }
+
+    try {
+      await createTx.mutateAsync({
+        user_id: newTx.user_id,
+        type: newTx.type,
+        category: newTx.category,
+        currency: newTx.currency,
+        amount: parseFloat(newTx.amount),
+        status: newTx.status,
+        description: newTx.description || `Admin ${newTx.type}`,
+      });
+      toast.success('Transaction created successfully');
+      setCreateDialogOpen(false);
+      setNewTx({
+        user_id: '',
+        type: 'deposit',
+        category: 'traditional',
+        currency: 'USD',
+        amount: '',
+        status: 'completed',
+        description: '',
+      });
+    } catch (error) {
+      toast.error('Failed to create transaction');
     }
   };
 
@@ -206,6 +261,10 @@ export function TransactionsManagement() {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Transaction
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -312,6 +371,132 @@ export function TransactionsManagement() {
         title="Delete Transaction"
         description="Are you sure you want to delete this transaction? This action cannot be undone."
       />
+
+      {/* Create Transaction Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Transaction</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>User</Label>
+              <Select value={newTx.user_id} onValueChange={(v) => setNewTx({ ...newTx, user_id: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select user" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users?.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.full_name || user.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={newTx.type} onValueChange={(v) => setNewTx({ ...newTx, type: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="deposit">Deposit</SelectItem>
+                    <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                    <SelectItem value="transfer">Transfer</SelectItem>
+                    <SelectItem value="loan_disbursement">Loan Disbursement</SelectItem>
+                    <SelectItem value="loan_payment">Loan Payment</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select 
+                  value={newTx.category} 
+                  onValueChange={(v) => setNewTx({ 
+                    ...newTx, 
+                    category: v, 
+                    currency: v === 'traditional' ? 'USD' : 'BTC' 
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="traditional">Traditional (USD)</SelectItem>
+                    <SelectItem value="crypto">Crypto</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Amount</Label>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={newTx.amount}
+                  onChange={(e) => setNewTx({ ...newTx, amount: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Currency</Label>
+                {newTx.category === 'traditional' ? (
+                  <Input value="USD" disabled />
+                ) : (
+                  <Select value={newTx.currency} onValueChange={(v) => setNewTx({ ...newTx, currency: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BTC">BTC</SelectItem>
+                      <SelectItem value="ETH">ETH</SelectItem>
+                      <SelectItem value="USDT">USDT</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={newTx.status} onValueChange={(v) => setNewTx({ ...newTx, status: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Description (Optional)</Label>
+              <Input
+                placeholder="Transaction description..."
+                value={newTx.description}
+                onChange={(e) => setNewTx({ ...newTx, description: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateTransaction} disabled={createTx.isPending}>
+              {createTx.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Transaction
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
