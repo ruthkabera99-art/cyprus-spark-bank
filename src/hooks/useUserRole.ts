@@ -13,15 +13,17 @@ export function useUserRole() {
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
-        .single();
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error fetching user role:', error);
         return 'user';
       }
 
-      return data?.role || 'user';
+      // Check if user has admin role (could have multiple roles)
+      const roles = data?.map(r => r.role) || [];
+      if (roles.includes('admin')) return 'admin';
+      return roles[0] || 'user';
     },
     enabled: !!user?.id,
   });
