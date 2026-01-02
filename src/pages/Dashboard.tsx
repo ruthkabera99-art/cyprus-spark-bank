@@ -2,8 +2,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useCryptoBalances } from '@/hooks/useCryptoBalances';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useTransactionNotifications } from '@/hooks/useTransactionNotifications';
 import { 
-  Wallet, 
+  Wallet,
   Bitcoin, 
   ArrowDownToLine, 
   ArrowUpFromLine, 
@@ -36,6 +37,9 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  
+  // Enable real-time transaction notifications
+  useTransactionNotifications();
 
   if (!user) return null;
 
