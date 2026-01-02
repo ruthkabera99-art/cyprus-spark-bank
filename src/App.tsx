@@ -20,6 +20,7 @@ import Transfer from "./pages/Transfer";
 import LoanApplication from "./pages/LoanApplication";
 import LoanStatus from "./pages/LoanStatus";
 import AdminDashboard from "./pages/AdminDashboard";
+import NotificationPreferences from "./pages/NotificationPreferences";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,10 @@ const App = () => (
             <Route 
               path="/dashboard/loans" 
               element={<ProtectedRoute><LoanStatus /></ProtectedRoute>} 
+            />
+            <Route 
+              path="/dashboard/notifications" 
+              element={<ProtectedRoute><NotificationPreferences /></ProtectedRoute>} 
             />
             <Route 
               path="/admin" 

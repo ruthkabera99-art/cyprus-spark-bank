@@ -151,6 +151,36 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          balance_changes_enabled: boolean
+          created_at: string | null
+          id: string
+          loan_updates_enabled: boolean
+          transactions_enabled: boolean
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance_changes_enabled?: boolean
+          created_at?: string | null
+          id?: string
+          loan_updates_enabled?: boolean
+          transactions_enabled?: boolean
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance_changes_enabled?: boolean
+          created_at?: string | null
+          id?: string
+          loan_updates_enabled?: boolean
+          transactions_enabled?: boolean
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
