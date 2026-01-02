@@ -3,6 +3,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useCryptoBalances } from '@/hooks/useCryptoBalances';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useTransactionNotifications } from '@/hooks/useTransactionNotifications';
+import { useCryptoBalanceNotifications } from '@/hooks/useCryptoBalanceNotifications';
 import { 
   Wallet,
   Bitcoin, 
@@ -40,6 +41,9 @@ const Dashboard = () => {
   
   // Enable real-time transaction notifications
   useTransactionNotifications();
+  
+  // Enable real-time crypto balance notifications
+  useCryptoBalanceNotifications();
 
   if (!user) return null;
 
