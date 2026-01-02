@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { NotificationBell } from './NotificationBell';
 
 const navItems = [
   { label: 'Home', path: '/' },
@@ -73,6 +74,7 @@ export function Header() {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-3">
+            {isAuthenticated && user && <NotificationBell />}
             {isAuthenticated && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

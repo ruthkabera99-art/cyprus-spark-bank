@@ -4,6 +4,7 @@ import { useCryptoBalances } from '@/hooks/useCryptoBalances';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useTransactionNotifications } from '@/hooks/useTransactionNotifications';
 import { useCryptoBalanceNotifications } from '@/hooks/useCryptoBalanceNotifications';
+import { useLoanStatusNotifications } from '@/hooks/useLoanStatusNotifications';
 import { 
   Wallet,
   Bitcoin, 
@@ -39,11 +40,10 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   
-  // Enable real-time transaction notifications
+  // Enable real-time notifications
   useTransactionNotifications();
-  
-  // Enable real-time crypto balance notifications
   useCryptoBalanceNotifications();
+  useLoanStatusNotifications();
 
   if (!user) return null;
 
