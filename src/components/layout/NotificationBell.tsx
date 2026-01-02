@@ -1,4 +1,5 @@
-import { Bell, Check, Trash2 } from 'lucide-react';
+import { Bell, Check, Trash2, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -64,27 +65,38 @@ export function NotificationBell() {
       <DropdownMenuContent align="end" className="w-80 bg-popover border border-border">
         <div className="flex items-center justify-between px-3 py-2 border-b border-border">
           <h3 className="font-semibold text-foreground">Notifications</h3>
-          {notifications.length > 0 && (
-            <div className="flex gap-1">
+          <div className="flex gap-1">
+            {notifications.length > 0 && (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 text-xs"
+                  onClick={markAllAsRead}
+                >
+                  <Check className="h-3 w-3 mr-1" />
+                  Read all
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                  onClick={clearNotifications}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </>
+            )}
+            <Link to="/dashboard/notifications">
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="h-7 px-2 text-xs"
-                onClick={markAllAsRead}
               >
-                <Check className="h-3 w-3 mr-1" />
-                Read all
+                <Settings className="h-3 w-3" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                onClick={clearNotifications}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
-          )}
+            </Link>
+          </div>
         </div>
         
         {notifications.length === 0 ? (

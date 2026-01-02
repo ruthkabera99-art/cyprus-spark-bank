@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotificationPreferences } from './useNotificationPreferences';
 
 export interface Notification {
   id: string;
@@ -21,6 +22,7 @@ const currencyIcons: Record<string, string> = {
 
 export function useNotifications() {
   const { user } = useAuth();
+  const { preferences } = useNotificationPreferences();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -68,6 +70,8 @@ export function useNotifications() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
+          if (!preferences.transactions_enabled) return;
+          
           const tx = payload.new as any;
           const icon = currencyIcons[tx.currency] || '💰';
           
@@ -93,6 +97,8 @@ export function useNotifications() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
+          if (!preferences.transactions_enabled) return;
+          
           const tx = payload.new as any;
           const oldTx = payload.old as any;
           
@@ -125,6 +131,8 @@ export function useNotifications() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
+          if (!preferences.balance_changes_enabled) return;
+          
           const newBalance = payload.new as any;
           const oldBalance = payload.old as any;
           
@@ -156,6 +164,8 @@ export function useNotifications() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
+          if (!preferences.loan_updates_enabled) return;
+          
           const newLoan = payload.new as any;
           const oldLoan = payload.old as any;
           
@@ -187,6 +197,8 @@ export function useNotifications() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
+          if (!preferences.loan_updates_enabled) return;
+          
           const loan = payload.new as any;
           
           addNotification({
@@ -204,7 +216,7 @@ export function useNotifications() {
       supabase.removeChannel(balanceChannel);
       supabase.removeChannel(loanChannel);
     };
-  }, [user?.id, addNotification]);
+  }, [user?.id, addNotification, preferences.transactions_enabled, preferences.balance_changes_enabled, preferences.loan_updates_enabled]);
 
   return {
     notifications,
