@@ -38,6 +38,8 @@ import { useAdminTransactions, useUpdateTransactionStatus, useDeleteTransaction,
 import { useAdminUsers } from '@/hooks/useAdminUsers';
 import { sendNotificationEmail } from '@/hooks/useNotificationEmail';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { TablePagination } from './TablePagination';
+import { usePagination } from '@/hooks/usePagination';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -91,6 +93,16 @@ export function TransactionsManagement() {
 
     return matchesSearch && matchesType && matchesStatus;
   });
+
+  const {
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+    paginatedData: paginatedTransactions,
+    handlePageChange,
+    handlePageSizeChange,
+  } = usePagination({ data: filteredTransactions, initialPageSize: 10 });
 
   const handleStatusChange = async (id: string, status: string) => {
     const tx = transactions?.find((t) => t.id === id);
@@ -366,8 +378,9 @@ export function TransactionsManagement() {
               <p className="text-muted-foreground">No transactions found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>User</TableHead>
@@ -380,7 +393,7 @@ export function TransactionsManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTransactions.map((tx) => (
+                  {paginatedTransactions.map((tx) => (
                     <TableRow key={tx.id}>
                       <TableCell>
                         <div>
@@ -445,9 +458,18 @@ export function TransactionsManagement() {
                 </TableBody>
               </Table>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </>
+        )}
+      </CardContent>
+    </Card>
 
       <DeleteConfirmDialog
         open={deleteDialogOpen}

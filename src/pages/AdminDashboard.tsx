@@ -28,6 +28,8 @@ import { LoanActionsDropdown } from '@/components/admin/LoanActionsDropdown';
 import { LoanDetailsDialog } from '@/components/admin/LoanDetailsDialog';
 import { LoanFormDialog, type LoanFormData } from '@/components/admin/LoanFormDialog';
 import { DeleteConfirmDialog } from '@/components/admin/DeleteConfirmDialog';
+import { TablePagination } from '@/components/admin/TablePagination';
+import { usePagination } from '@/hooks/usePagination';
 import {
   useAdminLoans,
   useUpdateLoanStatus,
@@ -79,6 +81,16 @@ export default function AdminDashboard() {
     const matchesStatus = statusFilter === 'all' || loan.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const {
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+    paginatedData: paginatedLoans,
+    handlePageChange,
+    handlePageSizeChange,
+  } = usePagination({ data: filteredLoans, initialPageSize: 10 });
 
   const stats = {
     total: loans?.length || 0,
@@ -303,48 +315,58 @@ export default function AdminDashboard() {
                     <p className="text-muted-foreground">No loan applications found</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Applicant</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead>Purpose</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredLoans.map((loan) => (
-                          <TableRow key={loan.id}>
-                            <TableCell>
-                              <div>
-                                <p className="font-medium">{loan.profiles?.full_name || 'Unknown'}</p>
-                                <p className="text-sm text-muted-foreground">{loan.profiles?.email}</p>
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-medium">{formatCurrency(loan.amount)}</TableCell>
-                            <TableCell className="capitalize">{loan.purpose.replace(/_/g, ' ')}</TableCell>
-                            <TableCell><LoanStatusBadge status={loan.status} /></TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {loan.submitted_at ? format(new Date(loan.submitted_at), 'MMM d, yyyy') : 'N/A'}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <LoanActionsDropdown
-                                loanId={loan.id}
-                                currentStatus={loan.status}
-                                onStatusChange={handleStatusChange}
-                                onEdit={handleEdit}
-                                onDelete={handleDelete}
-                                onView={handleView}
-                              />
-                            </TableCell>
+                  <>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Applicant</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Purpose</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedLoans.map((loan) => (
+                            <TableRow key={loan.id}>
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium">{loan.profiles?.full_name || 'Unknown'}</p>
+                                  <p className="text-sm text-muted-foreground">{loan.profiles?.email}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell className="font-medium">{formatCurrency(loan.amount)}</TableCell>
+                              <TableCell className="capitalize">{loan.purpose.replace(/_/g, ' ')}</TableCell>
+                              <TableCell><LoanStatusBadge status={loan.status} /></TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {loan.submitted_at ? format(new Date(loan.submitted_at), 'MMM d, yyyy') : 'N/A'}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <LoanActionsDropdown
+                                  loanId={loan.id}
+                                  currentStatus={loan.status}
+                                  onStatusChange={handleStatusChange}
+                                  onEdit={handleEdit}
+                                  onDelete={handleDelete}
+                                  onView={handleView}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    <TablePagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      pageSize={pageSize}
+                      totalItems={totalItems}
+                      onPageChange={handlePageChange}
+                      onPageSizeChange={handlePageSizeChange}
+                    />
+                  </>
                 )}
               </CardContent>
             </Card>
