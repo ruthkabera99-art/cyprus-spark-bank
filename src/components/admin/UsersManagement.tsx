@@ -18,25 +18,37 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Search, Edit, Loader2, Users, DollarSign, Shield, ShieldOff } from 'lucide-react';
-import { useAdminUsers, useUpdateUserBalance, useUpdateCryptoBalance, useUpdateUserProfile, type UserWithDetails } from '@/hooks/useAdminUsers';
+import { Search, Edit, Loader2, Users, DollarSign, Shield, ShieldOff, MoreHorizontal, Trash2, Eye, RefreshCw } from 'lucide-react';
+import { useAdminUsers, useUpdateUserBalance, useUpdateCryptoBalance, useUpdateUserProfile, useDeleteUser, type UserWithDetails } from '@/hooks/useAdminUsers';
 import { useToggleAdminRole } from '@/hooks/useRoleManagement';
 import { sendNotificationEmail } from '@/hooks/useNotificationEmail';
+import { DeleteConfirmDialog } from './DeleteConfirmDialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 export function UsersManagement() {
-  const { data: users, isLoading } = useAdminUsers();
+  const { data: users, isLoading, refetch } = useAdminUsers();
   const updateBalance = useUpdateUserBalance();
   const updateCryptoBalance = useUpdateCryptoBalance();
   const updateProfile = useUpdateUserProfile();
   const toggleRole = useToggleAdminRole();
+  const deleteUser = useDeleteUser();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithDetails | null>(null);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
@@ -117,6 +129,28 @@ export function UsersManagement() {
     }
   };
 
+  const handleView = (user: UserWithDetails) => {
+    setSelectedUser(user);
+    setViewDialogOpen(true);
+  };
+
+  const handleDelete = (userId: string) => {
+    setUserToDelete(userId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      await deleteUser.mutateAsync(userToDelete);
+      toast.success('User and all related data deleted');
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    } catch (error) {
+      toast.error('Failed to delete user');
+    }
+  };
+
   const handleRoleToggle = async (user: UserWithDetails) => {
     try {
       await toggleRole.mutateAsync({ userId: user.id, currentRole: user.role });
@@ -189,17 +223,23 @@ export function UsersManagement() {
         </Card>
       </div>
 
-      {/* Search */}
+      {/* Search and Actions */}
       <Card>
         <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button variant="outline" onClick={() => refetch()}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -278,9 +318,31 @@ export function UsersManagement() {
                           : 'N/A'}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(user)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-popover border border-border">
+                            <DropdownMenuItem onClick={() => handleView(user)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(user)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit User
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(user.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete User
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -375,6 +437,79 @@ export function UsersManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* View User Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+            <DialogDescription>Complete user information</DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Full Name</p>
+                  <p className="font-medium">{selectedUser.full_name || 'Not set'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium">{selectedUser.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Phone</p>
+                  <p className="font-medium">{selectedUser.phone || 'Not set'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Role</p>
+                  <Badge variant={selectedUser.role === 'admin' ? 'default' : 'secondary'}>
+                    {selectedUser.role}
+                  </Badge>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm text-muted-foreground">Address</p>
+                  <p className="font-medium">{selectedUser.address || 'Not set'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">USD Balance</p>
+                  <p className="font-medium text-lg">{formatCurrency(selectedUser.traditional_balance)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Joined</p>
+                  <p className="font-medium">
+                    {selectedUser.created_at
+                      ? format(new Date(selectedUser.created_at), 'MMM d, yyyy')
+                      : 'N/A'}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Crypto Balances</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedUser.crypto_balances.map((cb) => (
+                    <Badge key={cb.currency} variant="outline">
+                      {cb.currency}: {(cb.amount || 0).toFixed(cb.currency === 'USDT' ? 2 : 6)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div className="flex justify-end pt-4">
+                <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        isLoading={deleteUser.isPending}
+        title="Delete User"
+        description="Are you sure you want to delete this user? This will permanently remove the user and all their data including transactions, loans, and balances. This action cannot be undone."
+      />
     </div>
   );
 }

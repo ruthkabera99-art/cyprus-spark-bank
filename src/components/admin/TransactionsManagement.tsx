@@ -33,8 +33,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreHorizontal, Loader2, CreditCard, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle, XCircle, Clock, Plus } from 'lucide-react';
-import { useAdminTransactions, useUpdateTransactionStatus, useDeleteTransaction, useCreateAdminTransaction, type TransactionWithUser } from '@/hooks/useAdminTransactions';
+import { Search, MoreHorizontal, Loader2, CreditCard, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle, XCircle, Clock, Plus, Edit } from 'lucide-react';
+import { useAdminTransactions, useUpdateTransactionStatus, useDeleteTransaction, useCreateAdminTransaction, useUpdateTransaction, type TransactionWithUser } from '@/hooks/useAdminTransactions';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
 import { sendNotificationEmail } from '@/hooks/useNotificationEmail';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
@@ -45,6 +45,7 @@ export function TransactionsManagement() {
   const { data: transactions, isLoading } = useAdminTransactions();
   const { data: users } = useAdminUsers();
   const updateStatus = useUpdateTransactionStatus();
+  const updateTx = useUpdateTransaction();
   const deleteTx = useDeleteTransaction();
   const createTx = useCreateAdminTransaction();
 
@@ -63,6 +64,18 @@ export function TransactionsManagement() {
     currency: 'USD',
     amount: '',
     status: 'completed',
+    description: '',
+  });
+
+  // Edit transaction dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editTx, setEditTx] = useState<TransactionWithUser | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    type: '',
+    category: '',
+    currency: '',
+    amount: '',
+    status: '',
     description: '',
   });
 
@@ -165,6 +178,42 @@ export function TransactionsManagement() {
       });
     } catch (error) {
       toast.error('Failed to create transaction');
+    }
+  };
+
+  const handleEdit = (tx: TransactionWithUser) => {
+    setEditTx(tx);
+    setEditFormData({
+      type: tx.type,
+      category: tx.category,
+      currency: tx.currency,
+      amount: String(tx.amount),
+      status: tx.status,
+      description: tx.description || '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTx) return;
+
+    try {
+      await updateTx.mutateAsync({
+        id: editTx.id,
+        updates: {
+          type: editFormData.type,
+          category: editFormData.category,
+          currency: editFormData.currency,
+          amount: parseFloat(editFormData.amount) || 0,
+          status: editFormData.status,
+          description: editFormData.description,
+        },
+      });
+      toast.success('Transaction updated successfully');
+      setEditDialogOpen(false);
+      setEditTx(null);
+    } catch (error) {
+      toast.error('Failed to update transaction');
     }
   };
 
@@ -363,6 +412,11 @@ export function TransactionsManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-popover border border-border">
+                            <DropdownMenuItem onClick={() => handleEdit(tx)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Transaction
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => handleStatusChange(tx.id, 'completed')}>
                               <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                               Mark Completed
@@ -525,6 +579,116 @@ export function TransactionsManagement() {
             <Button onClick={handleCreateTransaction} disabled={createTx.isPending}>
               {createTx.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Transaction
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Transaction Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Transaction</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={editFormData.type} onValueChange={(v) => setEditFormData({ ...editFormData, type: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="deposit">Deposit</SelectItem>
+                    <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                    <SelectItem value="transfer">Transfer</SelectItem>
+                    <SelectItem value="loan_disbursement">Loan Disbursement</SelectItem>
+                    <SelectItem value="loan_payment">Loan Payment</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select 
+                  value={editFormData.category} 
+                  onValueChange={(v) => setEditFormData({ 
+                    ...editFormData, 
+                    category: v, 
+                    currency: v === 'traditional' ? 'USD' : editFormData.currency 
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="traditional">Traditional (USD)</SelectItem>
+                    <SelectItem value="crypto">Crypto</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Amount</Label>
+                <Input
+                  type="number"
+                  value={editFormData.amount}
+                  onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Currency</Label>
+                {editFormData.category === 'traditional' ? (
+                  <Input value="USD" disabled />
+                ) : (
+                  <Select value={editFormData.currency} onValueChange={(v) => setEditFormData({ ...editFormData, currency: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BTC">BTC</SelectItem>
+                      <SelectItem value="ETH">ETH</SelectItem>
+                      <SelectItem value="USDT">USDT</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={editFormData.status} onValueChange={(v) => setEditFormData({ ...editFormData, status: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Input
+                placeholder="Transaction description..."
+                value={editFormData.description}
+                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={updateTx.isPending}>
+              {updateTx.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -145,3 +145,54 @@ export function useUpdateUserProfile() {
     },
   });
 }
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      // Delete crypto balances first
+      await supabase
+        .from('crypto_balances')
+        .delete()
+        .eq('user_id', userId);
+
+      // Delete user roles
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      // Delete transactions
+      await supabase
+        .from('transactions')
+        .delete()
+        .eq('user_id', userId);
+
+      // Delete loan applications
+      await supabase
+        .from('loan_applications')
+        .delete()
+        .eq('user_id', userId);
+
+      // Delete notification preferences
+      await supabase
+        .from('notification_preferences')
+        .delete()
+        .eq('user_id', userId);
+
+      // Finally delete the profile
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-loans'] });
+    },
+  });
+}

@@ -19,6 +19,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import type { LoanWithProfile } from '@/hooks/useAdminLoans';
+import { useAdminUsers } from '@/hooks/useAdminUsers';
 import type { Database } from '@/integrations/supabase/types';
 
 type LoanStatus = Database['public']['Enums']['loan_status'];
@@ -86,6 +87,7 @@ export function LoanFormDialog({
   isLoading,
   mode,
 }: LoanFormDialogProps) {
+  const { data: users } = useAdminUsers();
   const [formData, setFormData] = useState<Partial<LoanFormData>>({
     amount: 0,
     term_months: 12,
@@ -166,14 +168,22 @@ export function LoanFormDialog({
         <form onSubmit={handleSubmit} className="space-y-6">
           {mode === 'create' && (
             <div className="space-y-2">
-              <Label htmlFor="user_id">User ID</Label>
-              <Input
-                id="user_id"
+              <Label htmlFor="user_id">Select User</Label>
+              <Select
                 value={formData.user_id || ''}
-                onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-                placeholder="Enter user UUID"
-                required
-              />
+                onValueChange={(value) => setFormData({ ...formData, user_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a user" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users?.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.full_name || user.email} ({user.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
