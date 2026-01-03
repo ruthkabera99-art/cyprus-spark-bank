@@ -29,6 +29,8 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Edit, Loader2, Wallet, Bitcoin, PlusCircle } from 'lucide-react';
 import { useAdminUsers, useUpdateCryptoBalance } from '@/hooks/useAdminUsers';
 import { useCreateAdminTransaction } from '@/hooks/useAdminTransactions';
+import { TablePagination } from './TablePagination';
+import { usePagination } from '@/hooks/usePagination';
 import { toast } from 'sonner';
 
 const CRYPTO_PRICES = {
@@ -54,6 +56,16 @@ export function CryptoManagement() {
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const {
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+    paginatedData: paginatedUsers,
+    handlePageChange,
+    handlePageSizeChange,
+  } = usePagination({ data: filteredUsers, initialPageSize: 10 });
 
   const handleUpdateBalance = async () => {
     if (!selectedUserId || !selectedCurrency || !amount) return;
@@ -221,86 +233,96 @@ export function CryptoManagement() {
               <p className="text-muted-foreground">No users found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>BTC</TableHead>
-                    <TableHead>ETH</TableHead>
-                    <TableHead>USDT</TableHead>
-                    <TableHead>Total Value</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map((user) => {
-                    const btc = user.crypto_balances.find((c) => c.currency === 'BTC')?.amount || 0;
-                    const eth = user.crypto_balances.find((c) => c.currency === 'ETH')?.amount || 0;
-                    const usdt = user.crypto_balances.find((c) => c.currency === 'USDT')?.amount || 0;
-                    const totalValue = btc * CRYPTO_PRICES.BTC + eth * CRYPTO_PRICES.ETH + usdt;
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>BTC</TableHead>
+                      <TableHead>ETH</TableHead>
+                      <TableHead>USDT</TableHead>
+                      <TableHead>Total Value</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedUsers.map((user) => {
+                      const btc = user.crypto_balances.find((c) => c.currency === 'BTC')?.amount || 0;
+                      const eth = user.crypto_balances.find((c) => c.currency === 'ETH')?.amount || 0;
+                      const usdt = user.crypto_balances.find((c) => c.currency === 'USDT')?.amount || 0;
+                      const totalValue = btc * CRYPTO_PRICES.BTC + eth * CRYPTO_PRICES.ETH + usdt;
 
-                    return (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{user.full_name || 'No name'}</p>
-                            <p className="text-sm text-muted-foreground">{user.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto p-1"
-                            onClick={() => openEditDialog(user.id, 'BTC', btc)}
-                          >
-                            <Badge variant="outline" className="text-orange-500">
-                              {btc.toFixed(6)} BTC
-                            </Badge>
-                          </Button>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto p-1"
-                            onClick={() => openEditDialog(user.id, 'ETH', eth)}
-                          >
-                            <Badge variant="outline" className="text-blue-500">
-                              {eth.toFixed(6)} ETH
-                            </Badge>
-                          </Button>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto p-1"
-                            onClick={() => openEditDialog(user.id, 'USDT', usdt)}
-                          >
-                            <Badge variant="outline" className="text-green-500">
-                              {usdt.toFixed(2)} USDT
-                            </Badge>
-                          </Button>
-                        </TableCell>
-                        <TableCell className="font-medium">${totalValue.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openAddFundsDialog(user.id)}
-                          >
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Funds
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                      return (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{user.full_name || 'No name'}</p>
+                              <p className="text-sm text-muted-foreground">{user.email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-auto p-1"
+                              onClick={() => openEditDialog(user.id, 'BTC', btc)}
+                            >
+                              <Badge variant="outline" className="text-orange-500">
+                                {btc.toFixed(6)} BTC
+                              </Badge>
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-auto p-1"
+                              onClick={() => openEditDialog(user.id, 'ETH', eth)}
+                            >
+                              <Badge variant="outline" className="text-blue-500">
+                                {eth.toFixed(6)} ETH
+                              </Badge>
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-auto p-1"
+                              onClick={() => openEditDialog(user.id, 'USDT', usdt)}
+                            >
+                              <Badge variant="outline" className="text-green-500">
+                                {usdt.toFixed(2)} USDT
+                              </Badge>
+                            </Button>
+                          </TableCell>
+                          <TableCell className="font-medium">${totalValue.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openAddFundsDialog(user.id)}
+                            >
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              Add Funds
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={totalItems}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+              />
+            </>
           )}
         </CardContent>
       </Card>

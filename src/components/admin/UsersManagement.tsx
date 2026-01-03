@@ -32,6 +32,8 @@ import { useAdminUsers, useUpdateUserBalance, useUpdateCryptoBalance, useUpdateU
 import { useToggleAdminRole } from '@/hooks/useRoleManagement';
 import { sendNotificationEmail } from '@/hooks/useNotificationEmail';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { TablePagination } from './TablePagination';
+import { usePagination } from '@/hooks/usePagination';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -64,6 +66,16 @@ export function UsersManagement() {
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const {
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+    paginatedData: paginatedUsers,
+    handlePageChange,
+    handlePageSizeChange,
+  } = usePagination({ data: filteredUsers, initialPageSize: 10 });
 
   const handleEdit = (user: UserWithDetails) => {
     setSelectedUser(user);
@@ -260,8 +272,9 @@ export function UsersManagement() {
               <p className="text-muted-foreground">No users found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>User</TableHead>
@@ -273,7 +286,7 @@ export function UsersManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => (
+                  {paginatedUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div>
@@ -349,9 +362,18 @@ export function UsersManagement() {
                 </TableBody>
               </Table>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </>
+        )}
+      </CardContent>
+    </Card>
 
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
