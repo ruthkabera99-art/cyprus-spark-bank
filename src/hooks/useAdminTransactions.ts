@@ -73,6 +73,42 @@ export function useUpdateTransactionStatus() {
   });
 }
 
+export function useUpdateTransaction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      id, 
+      updates 
+    }: { 
+      id: string; 
+      updates: {
+        type?: string;
+        category?: string;
+        currency?: string;
+        amount?: number;
+        status?: string;
+        description?: string;
+        recipient_address?: string;
+        network_fee?: number;
+      }
+    }) => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-transactions'] });
+    },
+  });
+}
+
 export function useCreateAdminTransaction() {
   const queryClient = useQueryClient();
 
