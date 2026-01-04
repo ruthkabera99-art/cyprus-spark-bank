@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -33,7 +34,10 @@ import { useToggleAdminRole } from '@/hooks/useRoleManagement';
 import { sendNotificationEmail } from '@/hooks/useNotificationEmail';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
 import { TablePagination } from './TablePagination';
+import { BulkActionsBar } from './BulkActionsBar';
 import { usePagination } from '@/hooks/usePagination';
+import { useBulkSelection } from '@/hooks/useBulkSelection';
+import { useLogAdminActivity } from '@/hooks/useAdminActivityLog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -44,13 +48,16 @@ export function UsersManagement() {
   const updateProfile = useUpdateUserProfile();
   const toggleRole = useToggleAdminRole();
   const deleteUser = useDeleteUser();
+  const logActivity = useLogAdminActivity();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithDetails | null>(null);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
@@ -76,6 +83,17 @@ export function UsersManagement() {
     handlePageChange,
     handlePageSizeChange,
   } = usePagination({ data: filteredUsers, initialPageSize: 10 });
+
+  const {
+    selectedCount,
+    selectedItems,
+    isAllSelected,
+    isPartiallySelected,
+    toggleItem,
+    toggleAll,
+    clearSelection,
+    isSelected,
+  } = useBulkSelection(paginatedUsers);
 
   const handleEdit = (user: UserWithDetails) => {
     setSelectedUser(user);
@@ -134,6 +152,12 @@ export function UsersManagement() {
         amount: parseFloat(formData.usdt_balance) || 0,
       });
 
+      logActivity.mutate({
+        action: 'update',
+        entityType: 'user',
+        entityId: selectedUser.id,
+      });
+
       toast.success('User updated successfully');
       setEditDialogOpen(false);
     } catch (error) {
@@ -155,6 +179,11 @@ export function UsersManagement() {
     if (!userToDelete) return;
     try {
       await deleteUser.mutateAsync(userToDelete);
+      logActivity.mutate({
+        action: 'delete',
+        entityType: 'user',
+        entityId: userToDelete,
+      });
       toast.success('User and all related data deleted');
       setDeleteDialogOpen(false);
       setUserToDelete(null);
@@ -163,10 +192,36 @@ export function UsersManagement() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    setIsBulkDeleting(true);
+    try {
+      await Promise.all(selectedItems.map((user) => deleteUser.mutateAsync(user.id)));
+      logActivity.mutate({
+        action: 'bulk_delete',
+        entityType: 'user',
+        details: { count: selectedCount },
+      });
+      toast.success(`Deleted ${selectedCount} users`);
+      clearSelection();
+      setBulkDeleteDialogOpen(false);
+    } catch (error) {
+      toast.error('Failed to delete some users');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   const handleRoleToggle = async (user: UserWithDetails) => {
     try {
       await toggleRole.mutateAsync({ userId: user.id, currentRole: user.role });
       const newRole = user.role === 'admin' ? 'user' : 'admin';
+      
+      logActivity.mutate({
+        action: 'role_change',
+        entityType: 'user',
+        entityId: user.id,
+        details: { old_role: user.role, new_role: newRole },
+      });
       
       // Send email notification
       sendNotificationEmail({
@@ -256,6 +311,14 @@ export function UsersManagement() {
         </CardContent>
       </Card>
 
+      <BulkActionsBar
+        selectedCount={selectedCount}
+        onClear={clearSelection}
+        onBulkDelete={() => setBulkDeleteDialogOpen(true)}
+        isDeleting={isBulkDeleting}
+        entityType="users"
+      />
+
       {/* Users Table */}
       <Card>
         <CardHeader>
@@ -277,6 +340,14 @@ export function UsersManagement() {
                 <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={isAllSelected}
+                        onCheckedChange={toggleAll}
+                        aria-label="Select all"
+                        className={isPartiallySelected ? 'opacity-50' : ''}
+                      />
+                    </TableHead>
                     <TableHead>User</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>USD Balance</TableHead>
@@ -287,7 +358,14 @@ export function UsersManagement() {
                 </TableHeader>
                 <TableBody>
                   {paginatedUsers.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className={isSelected(user.id) ? 'bg-primary/5' : ''}>
+                      <TableCell>
+                        <Checkbox
+                          checked={isSelected(user.id)}
+                          onCheckedChange={() => toggleItem(user.id)}
+                          aria-label={`Select user ${user.email}`}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{user.full_name || 'No name'}</p>
@@ -531,6 +609,16 @@ export function UsersManagement() {
         isLoading={deleteUser.isPending}
         title="Delete User"
         description="Are you sure you want to delete this user? This will permanently remove the user and all their data including transactions, loans, and balances. This action cannot be undone."
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        onConfirm={handleBulkDelete}
+        isLoading={isBulkDeleting}
+        title="Delete Multiple Users"
+        description={`Are you sure you want to delete ${selectedCount} selected users? This will permanently remove all their data. This action cannot be undone.`}
       />
     </div>
   );

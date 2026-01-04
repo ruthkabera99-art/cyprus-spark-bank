@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -39,7 +40,10 @@ import { useAdminUsers } from '@/hooks/useAdminUsers';
 import { sendNotificationEmail } from '@/hooks/useNotificationEmail';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
 import { TablePagination } from './TablePagination';
+import { BulkActionsBar } from './BulkActionsBar';
 import { usePagination } from '@/hooks/usePagination';
+import { useBulkSelection } from '@/hooks/useBulkSelection';
+import { useLogAdminActivity } from '@/hooks/useAdminActivityLog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -50,12 +54,15 @@ export function TransactionsManagement() {
   const updateTx = useUpdateTransaction();
   const deleteTx = useDeleteTransaction();
   const createTx = useCreateAdminTransaction();
+  const logActivity = useLogAdminActivity();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [txToDelete, setTxToDelete] = useState<string | null>(null);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   
   // Create transaction dialog state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -104,10 +111,28 @@ export function TransactionsManagement() {
     handlePageSizeChange,
   } = usePagination({ data: filteredTransactions, initialPageSize: 10 });
 
+  const {
+    selectedCount,
+    selectedItems,
+    isAllSelected,
+    isPartiallySelected,
+    toggleItem,
+    toggleAll,
+    clearSelection,
+    isSelected,
+  } = useBulkSelection(paginatedTransactions);
+
   const handleStatusChange = async (id: string, status: string) => {
     const tx = transactions?.find((t) => t.id === id);
     try {
       await updateStatus.mutateAsync({ id, status });
+      
+      logActivity.mutate({
+        action: 'status_change',
+        entityType: 'transaction',
+        entityId: id,
+        details: { old_status: tx?.status, new_status: status },
+      });
       
       // Send email notification for status change
       if (tx) {
@@ -131,6 +156,45 @@ export function TransactionsManagement() {
     }
   };
 
+  const handleBulkStatusChange = async (status: string) => {
+    setIsBulkUpdating(true);
+    try {
+      await Promise.all(
+        selectedItems.map((tx) => updateStatus.mutateAsync({ id: tx.id, status }))
+      );
+      logActivity.mutate({
+        action: 'bulk_status_change',
+        entityType: 'transaction',
+        details: { new_status: status, count: selectedCount },
+      });
+      toast.success(`Updated ${selectedCount} transactions to ${status}`);
+      clearSelection();
+    } catch (error) {
+      toast.error('Failed to update some transactions');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setIsBulkUpdating(true);
+    try {
+      await Promise.all(selectedItems.map((tx) => deleteTx.mutateAsync(tx.id)));
+      logActivity.mutate({
+        action: 'bulk_delete',
+        entityType: 'transaction',
+        details: { count: selectedCount },
+      });
+      toast.success(`Deleted ${selectedCount} transactions`);
+      clearSelection();
+      setBulkDeleteDialogOpen(false);
+    } catch (error) {
+      toast.error('Failed to delete some transactions');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
   const handleDelete = (id: string) => {
     setTxToDelete(id);
     setDeleteDialogOpen(true);
@@ -140,6 +204,11 @@ export function TransactionsManagement() {
     if (!txToDelete) return;
     try {
       await deleteTx.mutateAsync(txToDelete);
+      logActivity.mutate({
+        action: 'delete',
+        entityType: 'transaction',
+        entityId: txToDelete,
+      });
       toast.success('Transaction deleted');
       setDeleteDialogOpen(false);
       setTxToDelete(null);
@@ -362,6 +431,16 @@ export function TransactionsManagement() {
         </CardContent>
       </Card>
 
+      <BulkActionsBar
+        selectedCount={selectedCount}
+        onClear={clearSelection}
+        onBulkDelete={() => setBulkDeleteDialogOpen(true)}
+        onBulkStatusChange={handleBulkStatusChange}
+        isDeleting={isBulkUpdating}
+        isUpdating={isBulkUpdating}
+        entityType="transactions"
+      />
+
       {/* Transactions Table */}
       <Card>
         <CardHeader>
@@ -383,6 +462,14 @@ export function TransactionsManagement() {
                 <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={isAllSelected}
+                        onCheckedChange={toggleAll}
+                        aria-label="Select all"
+                        className={isPartiallySelected ? 'opacity-50' : ''}
+                      />
+                    </TableHead>
                     <TableHead>User</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Amount</TableHead>
@@ -394,7 +481,14 @@ export function TransactionsManagement() {
                 </TableHeader>
                 <TableBody>
                   {paginatedTransactions.map((tx) => (
-                    <TableRow key={tx.id}>
+                    <TableRow key={tx.id} className={isSelected(tx.id) ? 'bg-primary/5' : ''}>
+                      <TableCell>
+                        <Checkbox
+                          checked={isSelected(tx.id)}
+                          onCheckedChange={() => toggleItem(tx.id)}
+                          aria-label={`Select transaction ${tx.id}`}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{tx.user_name || 'Unknown'}</p>
@@ -478,6 +572,16 @@ export function TransactionsManagement() {
         isLoading={deleteTx.isPending}
         title="Delete Transaction"
         description="Are you sure you want to delete this transaction? This action cannot be undone."
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        onConfirm={handleBulkDelete}
+        isLoading={isBulkUpdating}
+        title="Delete Multiple Transactions"
+        description={`Are you sure you want to delete ${selectedCount} selected transactions? This action cannot be undone.`}
       />
 
       {/* Create Transaction Dialog */}
