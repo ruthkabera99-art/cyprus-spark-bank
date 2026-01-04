@@ -4,6 +4,7 @@ import { Footer } from '@/components/layout/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -23,13 +24,17 @@ import { AdminTabs } from '@/components/admin/AdminTabs';
 import { UsersManagement } from '@/components/admin/UsersManagement';
 import { TransactionsManagement } from '@/components/admin/TransactionsManagement';
 import { CryptoManagement } from '@/components/admin/CryptoManagement';
+import { ActivityLogTab } from '@/components/admin/ActivityLogTab';
 import { LoanStatusBadge } from '@/components/admin/LoanStatusBadge';
 import { LoanActionsDropdown } from '@/components/admin/LoanActionsDropdown';
 import { LoanDetailsDialog } from '@/components/admin/LoanDetailsDialog';
 import { LoanFormDialog, type LoanFormData } from '@/components/admin/LoanFormDialog';
 import { DeleteConfirmDialog } from '@/components/admin/DeleteConfirmDialog';
 import { TablePagination } from '@/components/admin/TablePagination';
+import { BulkActionsBar } from '@/components/admin/BulkActionsBar';
 import { usePagination } from '@/hooks/usePagination';
+import { useBulkSelection } from '@/hooks/useBulkSelection';
+import { useLogAdminActivity } from '@/hooks/useAdminActivityLog';
 import {
   useAdminLoans,
   useUpdateLoanStatus,
@@ -61,6 +66,7 @@ export default function AdminDashboard() {
   const createLoan = useCreateAdminLoan();
   const updateLoan = useUpdateAdminLoan();
   const deleteLoan = useDeleteLoan();
+  const logActivity = useLogAdminActivity();
 
   const [activeTab, setActiveTab] = useState('loans');
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,8 +75,10 @@ export default function AdminDashboard() {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [loanToDelete, setLoanToDelete] = useState<string | null>(null);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   const filteredLoans = loans?.filter((loan) => {
     const matchesSearch =
@@ -92,6 +100,17 @@ export default function AdminDashboard() {
     handlePageSizeChange,
   } = usePagination({ data: filteredLoans, initialPageSize: 10 });
 
+  const {
+    selectedCount,
+    selectedItems,
+    isAllSelected,
+    isPartiallySelected,
+    toggleItem,
+    toggleAll,
+    clearSelection,
+    isSelected,
+  } = useBulkSelection(paginatedLoans);
+
   const stats = {
     total: loans?.length || 0,
     pending: loans?.filter((l) => l.status === 'pending').length || 0,
@@ -102,11 +121,59 @@ export default function AdminDashboard() {
   };
 
   const handleStatusChange = async (id: string, status: LoanStatus) => {
+    const loan = loans?.find((l) => l.id === id);
     try {
       await updateStatus.mutateAsync({ id, status });
+      logActivity.mutate({
+        action: 'status_change',
+        entityType: 'loan',
+        entityId: id,
+        details: { old_status: loan?.status, new_status: status },
+      });
       toast.success(`Loan status updated to ${status.replace(/_/g, ' ')}`);
     } catch (error) {
       toast.error('Failed to update loan status');
+    }
+  };
+
+  const handleBulkStatusChange = async (status: string) => {
+    setIsBulkUpdating(true);
+    try {
+      await Promise.all(
+        selectedItems.map((loan) =>
+          updateStatus.mutateAsync({ id: loan.id, status: status as LoanStatus })
+        )
+      );
+      logActivity.mutate({
+        action: 'bulk_status_change',
+        entityType: 'loan',
+        details: { new_status: status, count: selectedCount },
+      });
+      toast.success(`Updated ${selectedCount} loans to ${status.replace(/_/g, ' ')}`);
+      clearSelection();
+    } catch (error) {
+      toast.error('Failed to update some loans');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setIsBulkUpdating(true);
+    try {
+      await Promise.all(selectedItems.map((loan) => deleteLoan.mutateAsync(loan.id)));
+      logActivity.mutate({
+        action: 'bulk_delete',
+        entityType: 'loan',
+        details: { count: selectedCount },
+      });
+      toast.success(`Deleted ${selectedCount} loans`);
+      clearSelection();
+      setBulkDeleteDialogOpen(false);
+    } catch (error) {
+      toast.error('Failed to delete some loans');
+    } finally {
+      setIsBulkUpdating(false);
     }
   };
 
@@ -142,6 +209,11 @@ export default function AdminDashboard() {
     if (!loanToDelete) return;
     try {
       await deleteLoan.mutateAsync(loanToDelete);
+      logActivity.mutate({
+        action: 'delete',
+        entityType: 'loan',
+        entityId: loanToDelete,
+      });
       toast.success('Loan application deleted');
       setDeleteDialogOpen(false);
       setLoanToDelete(null);
@@ -153,10 +225,20 @@ export default function AdminDashboard() {
   const handleFormSubmit = async (data: LoanFormData) => {
     try {
       if (formMode === 'create') {
-        await createLoan.mutateAsync(data);
+        const created = await createLoan.mutateAsync(data);
+        logActivity.mutate({
+          action: 'create',
+          entityType: 'loan',
+          entityId: created.id,
+        });
         toast.success('Loan application created');
       } else if (selectedLoan) {
         await updateLoan.mutateAsync({ id: selectedLoan.id, ...data });
+        logActivity.mutate({
+          action: 'update',
+          entityType: 'loan',
+          entityId: selectedLoan.id,
+        });
         toast.success('Loan application updated');
       }
       setFormDialogOpen(false);
@@ -300,6 +382,16 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
+            <BulkActionsBar
+              selectedCount={selectedCount}
+              onClear={clearSelection}
+              onBulkDelete={() => setBulkDeleteDialogOpen(true)}
+              onBulkStatusChange={handleBulkStatusChange}
+              isDeleting={isBulkUpdating}
+              isUpdating={isBulkUpdating}
+              entityType="loans"
+            />
+
             <Card>
               <CardHeader>
                 <CardTitle>Loan Applications</CardTitle>
@@ -320,6 +412,14 @@ export default function AdminDashboard() {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead className="w-12">
+                              <Checkbox
+                                checked={isAllSelected}
+                                onCheckedChange={toggleAll}
+                                aria-label="Select all"
+                                className={isPartiallySelected ? 'opacity-50' : ''}
+                              />
+                            </TableHead>
                             <TableHead>Applicant</TableHead>
                             <TableHead>Amount</TableHead>
                             <TableHead>Purpose</TableHead>
@@ -330,7 +430,14 @@ export default function AdminDashboard() {
                         </TableHeader>
                         <TableBody>
                           {paginatedLoans.map((loan) => (
-                            <TableRow key={loan.id}>
+                            <TableRow key={loan.id} className={isSelected(loan.id) ? 'bg-primary/5' : ''}>
+                              <TableCell>
+                                <Checkbox
+                                  checked={isSelected(loan.id)}
+                                  onCheckedChange={() => toggleItem(loan.id)}
+                                  aria-label={`Select loan ${loan.id}`}
+                                />
+                              </TableCell>
                               <TableCell>
                                 <div>
                                   <p className="font-medium">{loan.profiles?.full_name || 'Unknown'}</p>
@@ -376,6 +483,7 @@ export default function AdminDashboard() {
         {activeTab === 'users' && <UsersManagement />}
         {activeTab === 'transactions' && <TransactionsManagement />}
         {activeTab === 'crypto' && <CryptoManagement />}
+        {activeTab === 'activity' && <ActivityLogTab />}
       </main>
       <Footer />
 
@@ -393,6 +501,14 @@ export default function AdminDashboard() {
         onOpenChange={setDeleteDialogOpen}
         onConfirm={confirmDelete}
         isLoading={deleteLoan.isPending}
+      />
+      <DeleteConfirmDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        onConfirm={handleBulkDelete}
+        isLoading={isBulkUpdating}
+        title="Delete Multiple Loans"
+        description={`Are you sure you want to delete ${selectedCount} selected loans? This action cannot be undone.`}
       />
     </div>
   );

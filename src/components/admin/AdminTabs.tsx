@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Users, CreditCard, Wallet } from "lucide-react";
+import { FileText, Users, CreditCard, Wallet, History } from "lucide-react";
 
 interface AdminTabsProps {
   activeTab: string;
@@ -9,7 +9,7 @@ interface AdminTabsProps {
 export function AdminTabs({ activeTab, onTabChange }: AdminTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-5">
         <TabsTrigger value="loans" className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
           <span className="hidden sm:inline">Loans</span>
@@ -25,6 +25,10 @@ export function AdminTabs({ activeTab, onTabChange }: AdminTabsProps) {
         <TabsTrigger value="crypto" className="flex items-center gap-2">
           <Wallet className="h-4 w-4" />
           <span className="hidden sm:inline">Crypto</span>
+        </TabsTrigger>
+        <TabsTrigger value="activity" className="flex items-center gap-2">
+          <History className="h-4 w-4" />
+          <span className="hidden sm:inline">Activity</span>
         </TabsTrigger>
       </TabsList>
     </Tabs>
