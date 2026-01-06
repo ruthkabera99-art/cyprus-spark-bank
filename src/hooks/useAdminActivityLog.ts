@@ -25,15 +25,45 @@ export interface ActivityLog {
   admin_name?: string;
 }
 
-export function useAdminActivityLogs() {
+export interface ActivityLogFilters {
+  search?: string;
+  entityType?: EntityType | 'all';
+  action?: ActivityAction | 'all';
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export function useAdminActivityLogs(filters?: ActivityLogFilters) {
   return useQuery({
-    queryKey: ['admin-activity-logs'],
+    queryKey: ['admin-activity-logs', filters],
     queryFn: async () => {
-      const { data: logs, error } = await supabase
+      let query = supabase
         .from('admin_activity_logs')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
+        .order('created_at', { ascending: false });
+
+      // Apply entity type filter
+      if (filters?.entityType && filters.entityType !== 'all') {
+        query = query.eq('entity_type', filters.entityType);
+      }
+
+      // Apply action filter
+      if (filters?.action && filters.action !== 'all') {
+        query = query.eq('action', filters.action);
+      }
+
+      // Apply date range filters
+      if (filters?.startDate) {
+        query = query.gte('created_at', filters.startDate.toISOString());
+      }
+
+      if (filters?.endDate) {
+        const endOfDay = new Date(filters.endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endOfDay.toISOString());
+      }
+
+      const { data: logs, error } = await query.limit(500);
 
       if (error) throw error;
 
@@ -48,7 +78,7 @@ export function useAdminActivityLogs() {
 
       const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);
 
-      return logs.map((log) => {
+      let result = logs.map((log) => {
         const profile = profileMap.get(log.admin_id);
         return {
           ...log,
@@ -56,6 +86,20 @@ export function useAdminActivityLogs() {
           admin_name: profile?.full_name,
         };
       }) as ActivityLog[];
+
+      // Apply search filter (client-side for flexibility)
+      if (filters?.search) {
+        const searchLower = filters.search.toLowerCase();
+        result = result.filter((log) =>
+          log.action.toLowerCase().includes(searchLower) ||
+          log.entity_type.toLowerCase().includes(searchLower) ||
+          log.admin_email?.toLowerCase().includes(searchLower) ||
+          log.admin_name?.toLowerCase().includes(searchLower) ||
+          log.entity_id?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      return result;
     },
   });
 }
