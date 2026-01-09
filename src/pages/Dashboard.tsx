@@ -39,6 +39,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [txFilter, setTxFilter] = useState<'all' | 'traditional' | 'crypto'>('all');
   
   // Enable real-time notifications
   useTransactionNotifications();
@@ -265,7 +266,7 @@ const Dashboard = () => {
                 <CardTitle>Recent Transactions</CardTitle>
                 <CardDescription>Your latest account activity</CardDescription>
               </div>
-              <Tabs defaultValue="all" className="w-auto">
+              <Tabs value={txFilter} onValueChange={(v) => setTxFilter(v as 'all' | 'traditional' | 'crypto')} className="w-auto">
                 <TabsList>
                   <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="traditional">Traditional</TabsTrigger>
@@ -275,17 +276,23 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {formattedTransactions.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No transactions yet</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {formattedTransactions.map((tx) => (
-                  <TransactionItem key={tx.id} transaction={tx} />
-                ))}
-              </div>
-            )}
+            {(() => {
+              const filteredTx = txFilter === 'all' 
+                ? formattedTransactions 
+                : formattedTransactions.filter(tx => tx.category === txFilter);
+              
+              return filteredTx.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>{txFilter === 'all' ? 'No transactions yet' : `No ${txFilter} transactions`}</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {filteredTx.map((tx) => (
+                    <TransactionItem key={tx.id} transaction={tx} />
+                  ))}
+                </div>
+              );
+            })()}
             <div className="mt-6 text-center">
               <Button variant="outline">View All Transactions</Button>
             </div>

@@ -7,8 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Bitcoin, Copy, CheckCircle2 } from "lucide-react";
+import { Building2, Bitcoin, Copy, CheckCircle2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
+import { useCryptoBalances, useUpdateCryptoBalance } from "@/hooks/useCryptoBalances";
+import { useCreateTransaction } from "@/hooks/useTransactions";
+import { useAuth } from "@/contexts/AuthContext";
 
 const cryptoWallets = {
   BTC: {
@@ -33,10 +37,19 @@ const cryptoWallets = {
 
 const Deposit = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { data: profile } = useProfile();
+  const { data: cryptoBalances } = useCryptoBalances();
+  const updateProfile = useUpdateProfile();
+  const updateCryptoBalance = useUpdateCryptoBalance();
+  const createTransaction = useCreateTransaction();
+  
   const [selectedCrypto, setSelectedCrypto] = useState<keyof typeof cryptoWallets>("BTC");
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState("");
   const [depositMethod, setDepositMethod] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [cryptoDepositAmount, setCryptoDepositAmount] = useState("");
 
   const copyToClipboard = (address: string) => {
     navigator.clipboard.writeText(address);
@@ -48,7 +61,7 @@ const Deposit = () => {
     setTimeout(() => setCopiedAddress(null), 3000);
   };
 
-  const handleTraditionalDeposit = () => {
+  const handleTraditionalDeposit = async () => {
     if (!depositAmount || !depositMethod) {
       toast({
         title: "Missing Information",
@@ -57,13 +70,113 @@ const Deposit = () => {
       });
       return;
     }
-    toast({
-      title: "Deposit Initiated",
-      description: `Your ${depositMethod} deposit of $${depositAmount} is being processed.`,
-    });
-    setDepositAmount("");
-    setDepositMethod("");
+
+    const amount = parseFloat(depositAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid deposit amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Create transaction record
+      await createTransaction.mutateAsync({
+        type: 'deposit',
+        category: 'traditional',
+        currency: 'USD',
+        amount: amount,
+        status: 'completed',
+        description: `${depositMethod === 'wire' ? 'Wire Transfer' : depositMethod === 'ach' ? 'ACH Transfer' : 'Check'} Deposit`,
+        reference_id: `DEP-${Date.now()}`,
+        recipient_address: null,
+        network_fee: null,
+      });
+
+      // Update balance
+      await updateProfile.mutateAsync({
+        traditional_balance: (profile?.traditional_balance || 0) + amount,
+      });
+
+      toast({
+        title: "Deposit Successful",
+        description: `$${amount.toLocaleString()} has been added to your account.`,
+      });
+      setDepositAmount("");
+      setDepositMethod("");
+    } catch (error) {
+      toast({
+        title: "Deposit Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
+  const handleCryptoDeposit = async () => {
+    if (!cryptoDepositAmount) {
+      toast({
+        title: "Missing Amount",
+        description: "Please enter the amount you deposited",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const amount = parseFloat(cryptoDepositAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid deposit amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Create transaction record
+      await createTransaction.mutateAsync({
+        type: 'deposit',
+        category: 'crypto',
+        currency: selectedCrypto,
+        amount: amount,
+        status: 'pending',
+        description: `${cryptoWallets[selectedCrypto].name} deposit`,
+        reference_id: `CDEP-${Date.now()}`,
+        recipient_address: cryptoWallets[selectedCrypto].address,
+        network_fee: null,
+      });
+
+      // Update crypto balance
+      const currentBalance = cryptoBalances?.find(b => b.currency === selectedCrypto)?.amount || 0;
+      await updateCryptoBalance.mutateAsync({
+        currency: selectedCrypto,
+        amount: currentBalance + amount,
+      });
+
+      toast({
+        title: "Crypto Deposit Recorded",
+        description: `${amount} ${selectedCrypto} deposit is being confirmed on the network.`,
+      });
+      setCryptoDepositAmount("");
+    } catch (error) {
+      toast({
+        title: "Deposit Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -143,8 +256,15 @@ const Deposit = () => {
                     </Card>
                   )}
 
-                  <Button onClick={handleTraditionalDeposit} className="w-full">
-                    Initiate Deposit
+                  <Button onClick={handleTraditionalDeposit} className="w-full" disabled={isProcessing}>
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Initiate Deposit"
+                    )}
                   </Button>
                 </CardContent>
               </Card>
@@ -215,6 +335,22 @@ const Deposit = () => {
                     </div>
                   </div>
 
+                  {/* Confirm Crypto Deposit Amount */}
+                  <div className="space-y-2">
+                    <Label htmlFor="cryptoAmount">Confirm Deposit Amount ({selectedCrypto})</Label>
+                    <Input
+                      id="cryptoAmount"
+                      type="number"
+                      step="0.00000001"
+                      placeholder={`Enter ${selectedCrypto} amount sent`}
+                      value={cryptoDepositAmount}
+                      onChange={(e) => setCryptoDepositAmount(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter the amount you sent to confirm your deposit
+                    </p>
+                  </div>
+
                   <Card className="bg-amber-500/10 border-amber-500/20">
                     <CardContent className="pt-4">
                       <p className="text-sm text-amber-700 dark:text-amber-400">
@@ -223,6 +359,17 @@ const Deposit = () => {
                       </p>
                     </CardContent>
                   </Card>
+
+                  <Button onClick={handleCryptoDeposit} className="w-full" disabled={isProcessing}>
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Confirm Crypto Deposit"
+                    )}
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
