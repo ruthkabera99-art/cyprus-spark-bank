@@ -248,11 +248,11 @@ export const calculateMonthlyPayment = (principal: number, annualRate: number, t
   return (principal * monthlyRate * Math.pow(1 + monthlyRate, termMonths)) / (Math.pow(1 + monthlyRate, termMonths) - 1);
 };
 
-// Get crypto price (mock)
+// Get crypto price (mock - should be fetched from API in production)
 export const getCryptoPrice = (symbol: string): number => {
   const prices: Record<string, number> = {
-    BTC: 42000,
-    ETH: 3400,
+    BTC: 95000,  // Updated approximate price
+    ETH: 3300,
     USDT: 1,
   };
   return prices[symbol] || 0;
