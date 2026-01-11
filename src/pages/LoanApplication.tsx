@@ -48,9 +48,14 @@ const LoanApplication = () => {
   const cryptoUsdValue = parseFloat(cryptoAmount || '0') * cryptoPrice;
   const maxLoanFromCrypto = cryptoUsdValue * (loanConfig.cryptoLTV / 100);
   const userCryptoBalance = cryptoBalances?.find(c => c.currency === cryptoCurrency);
+  const hasSufficientCrypto = userCryptoBalance && (userCryptoBalance.amount || 0) >= parseFloat(cryptoAmount || '0');
   
   const canProceedStep1 = loanAmount >= loanConfig.minAmount && loanAmount <= loanConfig.maxAmount && loanPurpose;
-  const canProceedStep2 = collateralType && (collateralType === 'crypto' ? parseFloat(cryptoAmount) > 0 && maxLoanFromCrypto >= loanAmount : parseFloat(collateralValue) > 0 && collateralDescription);
+  const canProceedStep2 = collateralType && (
+    collateralType === 'crypto' 
+      ? parseFloat(cryptoAmount) > 0 && maxLoanFromCrypto >= loanAmount && hasSufficientCrypto
+      : parseFloat(collateralValue) > 0 && collateralDescription
+  );
   const canSubmit = agreedToTerms;
 
   const handleSubmit = async () => {
@@ -138,12 +143,23 @@ const LoanApplication = () => {
                 </div>
                 {collateralType === 'crypto' ? (
                   <div className="space-y-4">
-                    <Alert className="border-warning bg-warning/10"><AlertTriangle className="h-4 w-4 text-warning" /><AlertTitle>Crypto Collateral Notice</AlertTitle><AlertDescription>Your crypto will be locked. Max LTV: {loanConfig.cryptoLTV}%</AlertDescription></Alert>
+                    <Alert className="border-warning bg-warning/10"><AlertTriangle className="h-4 w-4 text-warning" /><AlertTitle>Crypto Collateral Notice</AlertTitle><AlertDescription>Your crypto will be locked when the loan is approved. Max LTV: {loanConfig.cryptoLTV}%</AlertDescription></Alert>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div><Label>Cryptocurrency</Label><Select value={cryptoCurrency} onValueChange={setCryptoCurrency}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent>{cryptoBalances?.map(c => <SelectItem key={c.currency} value={c.currency}>{c.icon} {c.name} ({c.amount.toFixed(4)})</SelectItem>)}</SelectContent></Select></div>
                       <div><Label>Amount to Lock</Label><Input type="number" step="0.0001" value={cryptoAmount} onChange={(e) => setCryptoAmount(e.target.value)} className="mt-1" /></div>
                     </div>
-                    {parseFloat(cryptoAmount) > 0 && <Card className="bg-muted/50"><CardContent className="p-4"><p className="text-sm text-muted-foreground">Collateral Value: ${cryptoUsdValue.toLocaleString()} | Max Loan: ${maxLoanFromCrypto.toLocaleString()}</p></CardContent></Card>}
+                    {parseFloat(cryptoAmount) > 0 && (
+                      <Card className="bg-muted/50">
+                        <CardContent className="p-4 space-y-2">
+                          <p className="text-sm text-muted-foreground">Collateral Value: ${cryptoUsdValue.toLocaleString()} | Max Loan: ${maxLoanFromCrypto.toLocaleString()}</p>
+                          {!hasSufficientCrypto && (
+                            <p className="text-sm text-destructive font-medium">
+                              Insufficient balance. You have {userCryptoBalance?.amount?.toFixed(4) || 0} {cryptoCurrency} but trying to lock {cryptoAmount}.
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 ) : collateralType && (
                   <div className="space-y-4">

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,10 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useCryptoBalances, useUpdateCryptoBalance } from "@/hooks/useCryptoBalances";
 import { useCreateTransaction } from "@/hooks/useTransactions";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const Transfer = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: profile } = useProfile();
   const { data: cryptoBalances } = useCryptoBalances();
   const updateCryptoBalance = useUpdateCryptoBalance();
@@ -99,11 +103,12 @@ const Transfer = () => {
       const referenceId = `TRF-${Date.now()}`;
       
       // Create outgoing transaction for sender
+      // The database trigger will automatically create the recipient's incoming transaction
       await createTransaction.mutateAsync({
         type: 'transfer',
         category: 'traditional',
         currency: 'USD',
-        amount: amount, // Use positive amount for consistency
+        amount: amount,
         status: 'completed',
         description: description || `Transfer to ${recipientProfile.full_name || recipientEmail}`,
         recipient_address: recipientEmail,
@@ -135,8 +140,8 @@ const Transfer = () => {
       
       if (recipientUpdateError) throw recipientUpdateError;
 
-      // Note: Recipient transaction is NOT created here due to RLS restrictions
-      // In a production app, this would be handled by a database trigger or edge function
+      // Invalidate profile cache to update balance in UI
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
 
       toast({
         title: "Transfer Successful",
