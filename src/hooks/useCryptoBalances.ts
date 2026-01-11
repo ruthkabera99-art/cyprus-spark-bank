@@ -12,10 +12,11 @@ export interface CryptoBalance {
   updated_at: string;
 }
 
-// Mock crypto prices - in real app, fetch from API
+// TODO: In production, fetch from CoinGecko/CryptoCompare API via edge function
+// These are placeholder prices - consider implementing real-time price fetching
 const cryptoPrices: Record<string, number> = {
-  BTC: 42000,
-  ETH: 3400,
+  BTC: 95000,  // Updated to more recent approximate price
+  ETH: 3300,
   USDT: 1,
 };
 

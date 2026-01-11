@@ -52,11 +52,36 @@ export function useUpdateLoanStatus() {
 
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: LoanStatus }) => {
+      // First get the current loan to access term_months
+      const { data: currentLoan } = await supabase
+        .from('loan_applications')
+        .select('term_months')
+        .eq('id', id)
+        .single();
+
       const updates: LoanUpdate = { status };
       
       if (status === 'approved') {
         updates.approved_at = new Date().toISOString();
         updates.reviewed_at = new Date().toISOString();
+        // Initialize remaining payments when loan is approved
+        updates.remaining_payments = currentLoan?.term_months || null;
+        // Set next payment date to 30 days from now
+        const nextPayment = new Date();
+        nextPayment.setDate(nextPayment.getDate() + 30);
+        updates.next_payment_date = nextPayment.toISOString().split('T')[0];
+      } else if (status === 'active') {
+        // When moving to active, ensure payment tracking is set up
+        if (!currentLoan?.term_months) {
+          const { data: loan } = await supabase
+            .from('loan_applications')
+            .select('term_months, remaining_payments')
+            .eq('id', id)
+            .single();
+          if (loan && !loan.remaining_payments) {
+            updates.remaining_payments = loan.term_months;
+          }
+        }
       } else if (status === 'rejected' || status === 'under_review') {
         updates.reviewed_at = new Date().toISOString();
       }
@@ -73,6 +98,7 @@ export function useUpdateLoanStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-loans'] });
+      queryClient.invalidateQueries({ queryKey: ['loan-applications'] });
     },
   });
 }

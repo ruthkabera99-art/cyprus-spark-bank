@@ -96,16 +96,18 @@ const Transfer = () => {
         return;
       }
 
+      const referenceId = `TRF-${Date.now()}`;
+      
       // Create outgoing transaction for sender
       await createTransaction.mutateAsync({
         type: 'transfer',
         category: 'traditional',
         currency: 'USD',
-        amount: -amount,
+        amount: amount, // Use positive amount for consistency
         status: 'completed',
         description: description || `Transfer to ${recipientProfile.full_name || recipientEmail}`,
         recipient_address: recipientEmail,
-        reference_id: `TRF-${Date.now()}`,
+        reference_id: referenceId,
         network_fee: null,
       });
 
@@ -133,23 +135,8 @@ const Transfer = () => {
       
       if (recipientUpdateError) throw recipientUpdateError;
 
-      // Create incoming transaction for recipient (as a system insert)
-      const { error: recipientTxError } = await supabase
-        .from('transactions')
-        .insert({
-          user_id: recipientProfile.id,
-          type: 'transfer',
-          category: 'traditional',
-          currency: 'USD',
-          amount: amount,
-          status: 'completed',
-          description: `Transfer from ${profile?.full_name || profile?.email}`,
-          reference_id: `TRF-${Date.now()}-IN`,
-          recipient_address: null,
-          network_fee: null,
-        });
-
-      // Note: recipientTxError might fail due to RLS - that's okay, recipient will see balance change
+      // Note: Recipient transaction is NOT created here due to RLS restrictions
+      // In a production app, this would be handled by a database trigger or edge function
 
       toast({
         title: "Transfer Successful",
@@ -209,9 +196,9 @@ const Transfer = () => {
         type: 'transfer',
         category: 'crypto',
         currency: selectedCrypto,
-        amount: -amount,
+        amount: amount, // Use positive amount for consistency
         status: 'pending',
-        description: cryptoDescription || `${selectedCrypto} transfer`,
+        description: cryptoDescription || `${selectedCrypto} transfer to external wallet`,
         recipient_address: walletAddress,
         reference_id: `CTRF-${Date.now()}`,
         network_fee: networkFee,
