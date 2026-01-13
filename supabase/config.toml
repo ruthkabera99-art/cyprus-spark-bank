@@ -2,3 +2,6 @@ project_id = "qtglyfekbjwzpuwdqfgc"
 
 [functions.send-notification-email]
 verify_jwt = true
+
+[functions.get-crypto-prices]
+verify_jwt = false

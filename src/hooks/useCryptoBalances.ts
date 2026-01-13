@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCryptoPrices } from './useCryptoPrices';
 
 export interface CryptoBalance {
   id: string;
@@ -12,14 +13,6 @@ export interface CryptoBalance {
   updated_at: string;
 }
 
-// TODO: In production, fetch from CoinGecko/CryptoCompare API via edge function
-// These are placeholder prices - consider implementing real-time price fetching
-const cryptoPrices: Record<string, number> = {
-  BTC: 95000,  // Updated to more recent approximate price
-  ETH: 3300,
-  USDT: 1,
-};
-
 const cryptoConfig: Record<string, { name: string; icon: string }> = {
   BTC: { name: 'Bitcoin', icon: '₿' },
   ETH: { name: 'Ethereum', icon: 'Ξ' },
@@ -28,9 +21,10 @@ const cryptoConfig: Record<string, { name: string; icon: string }> = {
 
 export function useCryptoBalances() {
   const { user } = useAuth();
+  const { data: priceData } = useCryptoPrices();
 
   return useQuery({
-    queryKey: ['crypto-balances', user?.id],
+    queryKey: ['crypto-balances', user?.id, priceData?.prices],
     queryFn: async () => {
       if (!user?.id) throw new Error('Not authenticated');
       
@@ -41,13 +35,17 @@ export function useCryptoBalances() {
       
       if (error) throw error;
       
-      // Enrich with prices and names
+      const prices = priceData?.prices || { BTC: 95000, ETH: 3300, USDT: 1 };
+      const changes = priceData?.changes || { BTC: 0, ETH: 0, USDT: 0 };
+      
+      // Enrich with real-time prices and names
       return (data as CryptoBalance[]).map(balance => ({
         ...balance,
         name: cryptoConfig[balance.currency]?.name || balance.currency,
         icon: cryptoConfig[balance.currency]?.icon || '',
-        price: cryptoPrices[balance.currency] || 0,
-        usdValue: (balance.amount || 0) * (cryptoPrices[balance.currency] || 0),
+        price: prices[balance.currency] || 0,
+        priceChange24h: changes[balance.currency] || 0,
+        usdValue: (balance.amount || 0) * (prices[balance.currency] || 0),
       }));
     },
     enabled: !!user?.id,
@@ -79,6 +77,5 @@ export function useUpdateCryptoBalance() {
   });
 }
 
-export function getCryptoPrice(symbol: string): number {
-  return cryptoPrices[symbol] || 0;
-}
+// Re-export for backward compatibility
+export { useCryptoPrices, getCryptoPrice } from './useCryptoPrices';

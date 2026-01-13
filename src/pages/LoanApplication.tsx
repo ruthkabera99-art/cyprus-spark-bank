@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCryptoBalances, getCryptoPrice } from '@/hooks/useCryptoBalances';
+import { useCryptoBalances } from '@/hooks/useCryptoBalances';
+import { useCryptoPrices, getCryptoPrice } from '@/hooks/useCryptoPrices';
 import { useCreateLoanApplication } from '@/hooks/useLoanApplications';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, ArrowLeft, ArrowRight, Check, Upload, X, Bitcoin, AlertTriangle, Calculator, Building2, Car, HardDrive, Coins, Package, Loader2 } from 'lucide-react';
@@ -21,6 +22,7 @@ const collateralIcons: Record<string, React.ElementType> = { real_estate: Buildi
 const LoanApplication = () => {
   const { user } = useAuth();
   const { data: cryptoBalances, isLoading: cryptoLoading } = useCryptoBalances();
+  const { data: priceData } = useCryptoPrices();
   const createLoan = useCreateLoanApplication();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -44,7 +46,7 @@ const LoanApplication = () => {
   const totalPayment = monthlyPayment * loanTerm;
   const totalInterest = totalPayment - loanAmount;
   
-  const cryptoPrice = getCryptoPrice(cryptoCurrency);
+  const cryptoPrice = getCryptoPrice(priceData?.prices, cryptoCurrency);
   const cryptoUsdValue = parseFloat(cryptoAmount || '0') * cryptoPrice;
   const maxLoanFromCrypto = cryptoUsdValue * (loanConfig.cryptoLTV / 100);
   const userCryptoBalance = cryptoBalances?.find(c => c.currency === cryptoCurrency);
