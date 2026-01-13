@@ -22,7 +22,9 @@ import {
   Coins,
   Package,
   Plus,
-  Loader2
+  Loader2,
+  CreditCard,
+  History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +33,10 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 import { type LoanApplication } from '@/hooks/useLoanApplications';
+import { LoanPaymentDialog } from '@/components/loans/LoanPaymentDialog';
+import { PaymentHistorySection } from '@/components/loans/PaymentHistorySection';
 
 const statusConfig = {
   pending: { label: 'Pending', icon: Clock, color: 'bg-warning text-warning-foreground', textColor: 'text-warning' },
@@ -55,6 +60,7 @@ const LoanStatus = () => {
   const { data: loans, isLoading } = useLoanApplications();
   const [selectedLoan, setSelectedLoan] = useState<LoanApplication | null>(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [paymentLoan, setPaymentLoan] = useState<LoanApplication | null>(null);
 
   if (!user) return null;
 
@@ -194,7 +200,7 @@ const LoanStatus = () => {
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Remaining Balance</p>
-                      <p className="text-lg font-bold">${(Number(activeLoan.amount) - Number(activeLoan.amount_paid)).toLocaleString()}</p>
+                      <p className="text-lg font-bold">${(Number(activeLoan.amount) - Number(activeLoan.amount_paid || 0)).toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Monthly Payment</p>
@@ -207,11 +213,22 @@ const LoanStatus = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">Progress</p>
                       <div className="flex items-center gap-2">
-                        <Progress value={(Number(activeLoan.amount_paid) / Number(activeLoan.amount)) * 100} className="h-2 flex-1" />
-                        <span className="text-sm font-medium">{Math.round((Number(activeLoan.amount_paid) / Number(activeLoan.amount)) * 100)}%</span>
+                        <Progress value={(Number(activeLoan.amount_paid || 0) / Number(activeLoan.amount)) * 100} className="h-2 flex-1" />
+                        <span className="text-sm font-medium">{Math.round((Number(activeLoan.amount_paid || 0) / Number(activeLoan.amount)) * 100)}%</span>
                       </div>
                     </div>
                   </div>
+                </div>
+                
+                {/* Make Payment Button */}
+                <div className="mt-4 pt-4 border-t border-border">
+                  <Button
+                    onClick={() => setPaymentLoan(activeLoan)}
+                    className="gradient-primary"
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Make a Payment
+                  </Button>
                 </div>
               </div>
             </div>
@@ -397,11 +414,50 @@ const LoanStatus = () => {
                       </AlertDescription>
                     </Alert>
                   )}
+
+                  {/* Payment History for Active Loans */}
+                  {(selectedLoan.status === 'approved' || selectedLoan.status === 'active') && (
+                    <>
+                      <Separator />
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="font-semibold flex items-center gap-2">
+                            <History className="w-4 h-4" />
+                            Payment History
+                          </h4>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelectedLoan(null);
+                              setPaymentLoan(selectedLoan);
+                            }}
+                            className="gradient-primary"
+                          >
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Make Payment
+                          </Button>
+                        </div>
+                        <PaymentHistorySection 
+                          loanId={selectedLoan.id} 
+                          loanPurpose={selectedLoan.purpose} 
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </>
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Payment Dialog */}
+        {paymentLoan && (
+          <LoanPaymentDialog
+            loan={paymentLoan}
+            open={!!paymentLoan}
+            onOpenChange={(open) => !open && setPaymentLoan(null)}
+          />
+        )}
       </main>
     </div>
   );
