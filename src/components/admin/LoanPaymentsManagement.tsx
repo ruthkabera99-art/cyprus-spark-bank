@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { TablePagination } from './TablePagination';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { CreateLoanPaymentDialog } from './CreateLoanPaymentDialog';
 import { usePagination } from '@/hooks/usePagination';
 import { useLogAdminActivity } from '@/hooks/useAdminActivityLog';
 import {
@@ -47,6 +48,7 @@ import {
   Clock,
   XCircle,
   Receipt,
+  Plus,
 } from 'lucide-react';
 
 export function LoanPaymentsManagement() {
@@ -59,6 +61,7 @@ export function LoanPaymentsManagement() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const filteredPayments = payments?.filter((payment) => {
     const matchesSearch =
@@ -154,6 +157,10 @@ export function LoanPaymentsManagement() {
         <Button variant="outline" onClick={() => refetch()}>
           <RefreshCw className="mr-2 h-4 w-4" />
           Refresh
+        </Button>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Payment
         </Button>
       </div>
 
@@ -342,6 +349,11 @@ export function LoanPaymentsManagement() {
         isLoading={deletePayment.isPending}
         title="Delete Payment"
         description="Are you sure you want to delete this payment? This action cannot be undone."
+      />
+
+      <CreateLoanPaymentDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
       />
     </>
   );

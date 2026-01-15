@@ -101,3 +101,39 @@ export function useDeleteLoanPayment() {
     },
   });
 }
+
+export interface CreateAdminLoanPaymentData {
+  loan_id: string;
+  user_id: string;
+  amount: number;
+  payment_method: string;
+  status: string;
+}
+
+export function useCreateAdminLoanPayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payment: CreateAdminLoanPaymentData) => {
+      const { data, error } = await supabase
+        .from('loan_payments')
+        .insert({
+          loan_id: payment.loan_id,
+          user_id: payment.user_id,
+          amount: payment.amount,
+          payment_method: payment.payment_method,
+          status: payment.status,
+          reference_id: `ADMIN-PAY-${Date.now()}`,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-loan-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-loans'] });
+    },
+  });
+}
