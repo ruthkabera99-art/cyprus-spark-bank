@@ -25,6 +25,7 @@ import { UsersManagement } from '@/components/admin/UsersManagement';
 import { TransactionsManagement } from '@/components/admin/TransactionsManagement';
 import { CryptoManagement } from '@/components/admin/CryptoManagement';
 import { ActivityLogTab } from '@/components/admin/ActivityLogTab';
+import { LoanPaymentsManagement } from '@/components/admin/LoanPaymentsManagement';
 import { LoanStatusBadge } from '@/components/admin/LoanStatusBadge';
 import { LoanActionsDropdown } from '@/components/admin/LoanActionsDropdown';
 import { LoanDetailsDialog } from '@/components/admin/LoanDetailsDialog';
@@ -480,6 +481,7 @@ export default function AdminDashboard() {
           </>
         )}
 
+        {activeTab === 'payments' && <LoanPaymentsManagement />}
         {activeTab === 'users' && <UsersManagement />}
         {activeTab === 'transactions' && <TransactionsManagement />}
         {activeTab === 'crypto' && <CryptoManagement />}
