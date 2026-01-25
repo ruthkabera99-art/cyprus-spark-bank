@@ -26,6 +26,7 @@ import { TransactionsManagement } from '@/components/admin/TransactionsManagemen
 import { CryptoManagement } from '@/components/admin/CryptoManagement';
 import { ActivityLogTab } from '@/components/admin/ActivityLogTab';
 import { LoanPaymentsManagement } from '@/components/admin/LoanPaymentsManagement';
+import { ChatManagement } from '@/components/admin/ChatManagement';
 import { LoanStatusBadge } from '@/components/admin/LoanStatusBadge';
 import { LoanActionsDropdown } from '@/components/admin/LoanActionsDropdown';
 import { LoanDetailsDialog } from '@/components/admin/LoanDetailsDialog';
@@ -36,6 +37,7 @@ import { BulkActionsBar } from '@/components/admin/BulkActionsBar';
 import { usePagination } from '@/hooks/usePagination';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { useLogAdminActivity } from '@/hooks/useAdminActivityLog';
+import { useAdminChats } from '@/hooks/useChat';
 import {
   useAdminLoans,
   useUpdateLoanStatus,
@@ -59,6 +61,7 @@ import {
 } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
+
 type LoanStatus = Database['public']['Enums']['loan_status'];
 
 export default function AdminDashboard() {
@@ -68,6 +71,7 @@ export default function AdminDashboard() {
   const updateLoan = useUpdateAdminLoan();
   const deleteLoan = useDeleteLoan();
   const logActivity = useLogAdminActivity();
+  const { unreadCount: unreadChatCount } = useAdminChats();
 
   const [activeTab, setActiveTab] = useState('loans');
   const [searchTerm, setSearchTerm] = useState('');
@@ -268,7 +272,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="mb-6">
-          <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} unreadChatCount={unreadChatCount} />
         </div>
 
         {activeTab === 'loans' && (
@@ -485,6 +489,7 @@ export default function AdminDashboard() {
         {activeTab === 'users' && <UsersManagement />}
         {activeTab === 'transactions' && <TransactionsManagement />}
         {activeTab === 'crypto' && <CryptoManagement />}
+        {activeTab === 'chat' && <ChatManagement />}
         {activeTab === 'activity' && <ActivityLogTab />}
       </main>
       <Footer />
