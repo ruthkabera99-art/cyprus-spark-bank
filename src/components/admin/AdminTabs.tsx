@@ -1,6 +1,7 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Users, CreditCard, Wallet, History, Receipt, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface AdminTabsProps {
   activeTab: string;
@@ -32,13 +33,19 @@ export function AdminTabs({ activeTab, onTabChange, unreadChatCount = 0 }: Admin
           <Wallet className="h-4 w-4" />
           <span className="hidden sm:inline">Crypto</span>
         </TabsTrigger>
-        <TabsTrigger value="chat" className="flex items-center gap-2 relative">
-          <MessageCircle className="h-4 w-4" />
+        <TabsTrigger 
+          value="chat" 
+          className={cn(
+            "flex items-center gap-2 relative",
+            unreadChatCount > 0 && "animate-pulse"
+          )}
+        >
+          <MessageCircle className={cn("h-4 w-4", unreadChatCount > 0 && "text-destructive")} />
           <span className="hidden sm:inline">Chat</span>
           {unreadChatCount > 0 && (
             <Badge 
               variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+              className="absolute -top-2 -right-2 h-5 min-w-5 p-0 flex items-center justify-center text-xs animate-bounce"
             >
               {unreadChatCount > 9 ? '9+' : unreadChatCount}
             </Badge>
