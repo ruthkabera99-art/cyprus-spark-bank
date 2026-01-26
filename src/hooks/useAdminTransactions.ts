@@ -138,6 +138,184 @@ export function useCreateAdminTransaction() {
   });
 }
 
+// Approve deposit and update user balance
+export function useApproveDeposit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      transactionId, 
+      userId, 
+      amount, 
+      category, 
+      currency 
+    }: { 
+      transactionId: string; 
+      userId: string; 
+      amount: number; 
+      category: string; 
+      currency: string;
+    }) => {
+      // Update transaction status to completed
+      const { error: txError } = await supabase
+        .from('transactions')
+        .update({ status: 'completed' })
+        .eq('id', transactionId);
+
+      if (txError) throw txError;
+
+      // Update user balance based on category
+      if (category === 'traditional') {
+        // Get current balance
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('traditional_balance')
+          .eq('id', userId)
+          .single();
+
+        if (profileError) throw profileError;
+
+        // Update traditional balance
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ traditional_balance: (profile.traditional_balance || 0) + amount })
+          .eq('id', userId);
+
+        if (updateError) throw updateError;
+      } else if (category === 'crypto') {
+        // Get current crypto balance
+        const { data: cryptoBalance, error: cryptoError } = await supabase
+          .from('crypto_balances')
+          .select('amount')
+          .eq('user_id', userId)
+          .eq('currency', currency)
+          .maybeSingle();
+
+        if (cryptoError) throw cryptoError;
+
+        if (cryptoBalance) {
+          // Update existing balance
+          const { error: updateError } = await supabase
+            .from('crypto_balances')
+            .update({ amount: (cryptoBalance.amount || 0) + amount })
+            .eq('user_id', userId)
+            .eq('currency', currency);
+
+          if (updateError) throw updateError;
+        } else {
+          // Create new balance entry
+          const { error: insertError } = await supabase
+            .from('crypto_balances')
+            .insert({ user_id: userId, currency, amount });
+
+          if (insertError) throw insertError;
+        }
+      }
+
+      return { transactionId, userId, amount };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+  });
+}
+
+// Admin update user balance directly
+export function useAdminUpdateBalance() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      userId, 
+      balanceType, 
+      amount, 
+      currency,
+      operation
+    }: { 
+      userId: string; 
+      balanceType: 'traditional' | 'crypto'; 
+      amount: number; 
+      currency?: string;
+      operation: 'set' | 'add' | 'subtract';
+    }) => {
+      if (balanceType === 'traditional') {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('traditional_balance')
+          .eq('id', userId)
+          .single();
+
+        if (profileError) throw profileError;
+
+        let newBalance: number;
+        const currentBalance = profile.traditional_balance || 0;
+        
+        if (operation === 'set') {
+          newBalance = amount;
+        } else if (operation === 'add') {
+          newBalance = currentBalance + amount;
+        } else {
+          newBalance = currentBalance - amount;
+        }
+
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ traditional_balance: newBalance })
+          .eq('id', userId);
+
+        if (updateError) throw updateError;
+
+        return { userId, newBalance, balanceType };
+      } else if (balanceType === 'crypto' && currency) {
+        const { data: cryptoBalance, error: cryptoError } = await supabase
+          .from('crypto_balances')
+          .select('amount')
+          .eq('user_id', userId)
+          .eq('currency', currency)
+          .maybeSingle();
+
+        if (cryptoError) throw cryptoError;
+
+        let newBalance: number;
+        const currentBalance = cryptoBalance?.amount || 0;
+        
+        if (operation === 'set') {
+          newBalance = amount;
+        } else if (operation === 'add') {
+          newBalance = currentBalance + amount;
+        } else {
+          newBalance = currentBalance - amount;
+        }
+
+        if (cryptoBalance) {
+          const { error: updateError } = await supabase
+            .from('crypto_balances')
+            .update({ amount: newBalance })
+            .eq('user_id', userId)
+            .eq('currency', currency);
+
+          if (updateError) throw updateError;
+        } else {
+          const { error: insertError } = await supabase
+            .from('crypto_balances')
+            .insert({ user_id: userId, currency, amount: newBalance });
+
+          if (insertError) throw insertError;
+        }
+
+        return { userId, newBalance, balanceType, currency };
+      }
+
+      throw new Error('Invalid balance type');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-transactions'] });
+    },
+  });
+}
+
 export function useDeleteTransaction() {
   const queryClient = useQueryClient();
 

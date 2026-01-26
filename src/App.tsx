@@ -22,6 +22,7 @@ import LoanApplication from "./pages/LoanApplication";
 import LoanStatus from "./pages/LoanStatus";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotificationPreferences from "./pages/NotificationPreferences";
+import ActivityHistory from "./pages/ActivityHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,10 @@ const App = () => (
             <Route 
               path="/dashboard/notifications" 
               element={<ProtectedRoute><NotificationPreferences /></ProtectedRoute>} 
+            />
+            <Route 
+              path="/dashboard/activity" 
+              element={<ProtectedRoute><ActivityHistory /></ProtectedRoute>} 
             />
             <Route 
               path="/admin" 

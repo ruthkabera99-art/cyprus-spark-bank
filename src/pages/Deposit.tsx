@@ -7,10 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Bitcoin, Copy, CheckCircle2, Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Building2, Bitcoin, Copy, CheckCircle2, Loader2, Clock, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
-import { useCryptoBalances, useUpdateCryptoBalance } from "@/hooks/useCryptoBalances";
 import { useCreateTransaction } from "@/hooks/useTransactions";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -38,10 +37,6 @@ const cryptoWallets = {
 const Deposit = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { data: profile } = useProfile();
-  const { data: cryptoBalances } = useCryptoBalances();
-  const updateProfile = useUpdateProfile();
-  const updateCryptoBalance = useUpdateCryptoBalance();
   const createTransaction = useCreateTransaction();
   
   const [selectedCrypto, setSelectedCrypto] = useState<keyof typeof cryptoWallets>("BTC");
@@ -50,6 +45,7 @@ const Deposit = () => {
   const [depositMethod, setDepositMethod] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [cryptoDepositAmount, setCryptoDepositAmount] = useState("");
+  const [requestSubmitted, setRequestSubmitted] = useState(false);
 
   const copyToClipboard = (address: string) => {
     navigator.clipboard.writeText(address);
@@ -83,33 +79,29 @@ const Deposit = () => {
 
     setIsProcessing(true);
     try {
-      // Create transaction record
+      // Create deposit REQUEST with pending status - NO balance update
       await createTransaction.mutateAsync({
         type: 'deposit',
         category: 'traditional',
         currency: 'USD',
         amount: amount,
-        status: 'completed',
-        description: `${depositMethod === 'wire' ? 'Wire Transfer' : depositMethod === 'ach' ? 'ACH Transfer' : 'Check'} Deposit`,
-        reference_id: `DEP-${Date.now()}`,
+        status: 'pending', // Always pending - needs admin approval
+        description: `${depositMethod === 'wire' ? 'Wire Transfer' : depositMethod === 'ach' ? 'ACH Transfer' : 'Check'} Deposit Request`,
+        reference_id: `DEP-REQ-${Date.now()}`,
         recipient_address: null,
         network_fee: null,
       });
 
-      // Update balance
-      await updateProfile.mutateAsync({
-        traditional_balance: (profile?.traditional_balance || 0) + amount,
-      });
-
+      setRequestSubmitted(true);
       toast({
-        title: "Deposit Successful",
-        description: `$${amount.toLocaleString()} has been added to your account.`,
+        title: "Deposit Request Submitted",
+        description: "Your deposit request is pending admin approval. You will be notified once approved.",
       });
       setDepositAmount("");
       setDepositMethod("");
     } catch (error) {
       toast({
-        title: "Deposit Failed",
+        title: "Request Failed",
         description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
@@ -140,34 +132,28 @@ const Deposit = () => {
 
     setIsProcessing(true);
     try {
-      // Create transaction record
+      // Create crypto deposit REQUEST with pending status - NO balance update
       await createTransaction.mutateAsync({
         type: 'deposit',
         category: 'crypto',
         currency: selectedCrypto,
         amount: amount,
-        status: 'pending',
-        description: `${cryptoWallets[selectedCrypto].name} deposit`,
-        reference_id: `CDEP-${Date.now()}`,
+        status: 'pending', // Always pending - needs admin approval
+        description: `${cryptoWallets[selectedCrypto].name} Deposit Request`,
+        reference_id: `CDEP-REQ-${Date.now()}`,
         recipient_address: cryptoWallets[selectedCrypto].address,
         network_fee: null,
       });
 
-      // Update crypto balance
-      const currentBalance = cryptoBalances?.find(b => b.currency === selectedCrypto)?.amount || 0;
-      await updateCryptoBalance.mutateAsync({
-        currency: selectedCrypto,
-        amount: currentBalance + amount,
-      });
-
+      setRequestSubmitted(true);
       toast({
-        title: "Crypto Deposit Recorded",
-        description: `${amount} ${selectedCrypto} deposit is being confirmed on the network.`,
+        title: "Crypto Deposit Request Submitted",
+        description: "Your deposit request is pending admin approval and network confirmation.",
       });
       setCryptoDepositAmount("");
     } catch (error) {
       toast({
-        title: "Deposit Failed",
+        title: "Request Failed",
         description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
@@ -184,7 +170,26 @@ const Deposit = () => {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-foreground mb-2">Deposit Funds</h1>
-          <p className="text-muted-foreground mb-8">Add money to your account via bank transfer or cryptocurrency</p>
+          <p className="text-muted-foreground mb-8">Request a deposit - admin approval required</p>
+
+          {/* Pending Notice */}
+          <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
+            <Info className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="text-amber-700">Deposit Requests Require Approval</AlertTitle>
+            <AlertDescription className="text-amber-600">
+              All deposit requests are reviewed and approved by our admin team. Your balance will be updated once approved.
+            </AlertDescription>
+          </Alert>
+
+          {requestSubmitted && (
+            <Alert className="mb-6 border-green-500/50 bg-green-500/10">
+              <Clock className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-700">Request Submitted Successfully!</AlertTitle>
+              <AlertDescription className="text-green-600">
+                Your deposit request has been submitted and is pending admin approval. You can track the status in your Activity History.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Tabs defaultValue="traditional" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -201,8 +206,8 @@ const Deposit = () => {
             <TabsContent value="traditional">
               <Card>
                 <CardHeader>
-                  <CardTitle>Bank Transfer Deposit</CardTitle>
-                  <CardDescription>Transfer funds from your external bank account</CardDescription>
+                  <CardTitle>Bank Transfer Deposit Request</CardTitle>
+                  <CardDescription>Submit a deposit request for admin approval</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
@@ -252,6 +257,9 @@ const Deposit = () => {
                             <span className="font-medium">NXBKUS33XXX</span>
                           </div>
                         </div>
+                        <p className="text-xs text-muted-foreground mt-4">
+                          After making the transfer, submit your request below. Admin will verify and approve.
+                        </p>
                       </CardContent>
                     </Card>
                   )}
@@ -260,10 +268,13 @@ const Deposit = () => {
                     {isProcessing ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
+                        Submitting Request...
                       </>
                     ) : (
-                      "Initiate Deposit"
+                      <>
+                        <Clock className="mr-2 h-4 w-4" />
+                        Submit Deposit Request
+                      </>
                     )}
                   </Button>
                 </CardContent>
@@ -273,8 +284,8 @@ const Deposit = () => {
             <TabsContent value="crypto">
               <Card>
                 <CardHeader>
-                  <CardTitle>Crypto Deposit</CardTitle>
-                  <CardDescription>Send cryptocurrency to your wallet address</CardDescription>
+                  <CardTitle>Crypto Deposit Request</CardTitle>
+                  <CardDescription>Send cryptocurrency and submit a deposit request</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
@@ -337,7 +348,7 @@ const Deposit = () => {
 
                   {/* Confirm Crypto Deposit Amount */}
                   <div className="space-y-2">
-                    <Label htmlFor="cryptoAmount">Confirm Deposit Amount ({selectedCrypto})</Label>
+                    <Label htmlFor="cryptoAmount">Amount Sent ({selectedCrypto})</Label>
                     <Input
                       id="cryptoAmount"
                       type="number"
@@ -347,7 +358,7 @@ const Deposit = () => {
                       onChange={(e) => setCryptoDepositAmount(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Enter the amount you sent to confirm your deposit
+                      Enter the amount you sent. Admin will verify the transaction on the network.
                     </p>
                   </div>
 
@@ -355,7 +366,7 @@ const Deposit = () => {
                     <CardContent className="pt-4">
                       <p className="text-sm text-amber-700 dark:text-amber-400">
                         <strong>Important:</strong> Only send {cryptoWallets[selectedCrypto].name} ({selectedCrypto}) to this address. 
-                        Sending any other cryptocurrency may result in permanent loss of funds.
+                        Your deposit will be credited after admin verification and network confirmation.
                       </p>
                     </CardContent>
                   </Card>
@@ -364,10 +375,13 @@ const Deposit = () => {
                     {isProcessing ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
+                        Submitting Request...
                       </>
                     ) : (
-                      "Confirm Crypto Deposit"
+                      <>
+                        <Clock className="mr-2 h-4 w-4" />
+                        Submit Crypto Deposit Request
+                      </>
                     )}
                   </Button>
                 </CardContent>
