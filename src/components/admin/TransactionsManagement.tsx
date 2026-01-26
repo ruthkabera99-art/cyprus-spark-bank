@@ -34,8 +34,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreHorizontal, Loader2, CreditCard, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle, XCircle, Clock, Plus, Edit } from 'lucide-react';
-import { useAdminTransactions, useUpdateTransactionStatus, useDeleteTransaction, useCreateAdminTransaction, useUpdateTransaction, type TransactionWithUser } from '@/hooks/useAdminTransactions';
+import { Search, MoreHorizontal, Loader2, CreditCard, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle, XCircle, Clock, Plus, Edit, DollarSign } from 'lucide-react';
+import { useAdminTransactions, useUpdateTransactionStatus, useDeleteTransaction, useCreateAdminTransaction, useUpdateTransaction, useApproveDeposit, type TransactionWithUser } from '@/hooks/useAdminTransactions';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
 import { sendNotificationEmail } from '@/hooks/useNotificationEmail';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
@@ -54,6 +54,7 @@ export function TransactionsManagement() {
   const updateTx = useUpdateTransaction();
   const deleteTx = useDeleteTransaction();
   const createTx = useCreateAdminTransaction();
+  const approveDeposit = useApproveDeposit();
   const logActivity = useLogAdminActivity();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -153,6 +154,53 @@ export function TransactionsManagement() {
       toast.success(`Transaction status updated to ${status}`);
     } catch (error) {
       toast.error('Failed to update transaction status');
+    }
+  };
+
+  const handleApproveDeposit = async (tx: TransactionWithUser) => {
+    if (tx.type !== 'deposit' || tx.status !== 'pending') {
+      toast.error('Can only approve pending deposit requests');
+      return;
+    }
+
+    try {
+      await approveDeposit.mutateAsync({
+        transactionId: tx.id,
+        userId: tx.user_id,
+        amount: tx.amount,
+        category: tx.category,
+        currency: tx.currency,
+      });
+
+      logActivity.mutate({
+        action: 'status_change',
+        entityType: 'transaction',
+        entityId: tx.id,
+        details: { 
+          action: 'approve_deposit',
+          amount: tx.amount, 
+          currency: tx.currency,
+          category: tx.category
+        },
+      });
+
+      // Send email notification
+      sendNotificationEmail({
+        type: 'transaction_status_changed',
+        userId: tx.user_id,
+        data: {
+          transactionId: tx.id,
+          transactionType: 'deposit',
+          amount: tx.amount,
+          currency: tx.currency,
+          oldStatus: 'pending',
+          status: 'completed',
+        },
+      });
+
+      toast.success('Deposit approved and balance updated successfully');
+    } catch (error) {
+      toast.error('Failed to approve deposit');
     }
   };
 
@@ -519,6 +567,19 @@ export function TransactionsManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-popover border border-border">
+                            {/* Show Approve Deposit option for pending deposits */}
+                            {tx.type === 'deposit' && tx.status === 'pending' && (
+                              <>
+                                <DropdownMenuItem 
+                                  onClick={() => handleApproveDeposit(tx)}
+                                  className="text-green-600 focus:text-green-600 font-medium"
+                                >
+                                  <DollarSign className="mr-2 h-4 w-4" />
+                                  Approve Deposit & Update Balance
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                              </>
+                            )}
                             <DropdownMenuItem onClick={() => handleEdit(tx)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Transaction
@@ -526,7 +587,7 @@ export function TransactionsManagement() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => handleStatusChange(tx.id, 'completed')}>
                               <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                              Mark Completed
+                              Mark Completed (No Balance Update)
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleStatusChange(tx.id, 'pending')}>
                               <Clock className="mr-2 h-4 w-4 text-yellow-500" />

@@ -19,7 +19,8 @@ import {
   LogOut,
   Copy,
   CheckCircle2,
-  Loader2
+  Loader2,
+  History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -233,11 +234,11 @@ const Dashboard = () => {
             <CardDescription>Manage your accounts and transactions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <QuickAction 
                 icon={ArrowDownToLine}
                 label="Deposit"
-                description="Add funds to your account"
+                description="Request a deposit"
                 to="/dashboard/deposit"
               />
               <QuickAction 
@@ -257,6 +258,12 @@ const Dashboard = () => {
                 label="Request Loan"
                 description="Apply for a loan"
                 to="/loans"
+              />
+              <QuickAction 
+                icon={History}
+                label="Activity History"
+                description="View all transactions"
+                to="/dashboard/activity"
               />
             </div>
           </CardContent>
@@ -298,7 +305,9 @@ const Dashboard = () => {
               );
             })()}
             <div className="mt-6 text-center">
-              <Button variant="outline">View All Transactions</Button>
+              <Button variant="outline" asChild>
+                <Link to="/dashboard/activity">View All Transactions</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
