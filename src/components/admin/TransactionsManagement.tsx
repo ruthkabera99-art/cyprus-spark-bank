@@ -471,6 +471,27 @@ export function TransactionsManagement() {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant={typeFilter === 'deposit' && statusFilter === 'pending' ? 'default' : 'outline'}
+              onClick={() => {
+                if (typeFilter === 'deposit' && statusFilter === 'pending') {
+                  setTypeFilter('all');
+                  setStatusFilter('all');
+                } else {
+                  setTypeFilter('deposit');
+                  setStatusFilter('pending');
+                }
+              }}
+              className="relative"
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              Pending Deposits
+              {(transactions?.filter(t => t.type === 'deposit' && t.status === 'pending').length || 0) > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
+                  {transactions?.filter(t => t.type === 'deposit' && t.status === 'pending').length}
+                </Badge>
+              )}
+            </Button>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Transaction
