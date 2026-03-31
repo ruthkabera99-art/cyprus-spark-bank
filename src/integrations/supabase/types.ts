@@ -331,7 +331,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_number: string | null
           address: string | null
+          avatar_url: string | null
           created_at: string | null
           email: string
           full_name: string | null
@@ -341,7 +343,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          account_number?: string | null
           address?: string | null
+          avatar_url?: string | null
           created_at?: string | null
           email: string
           full_name?: string | null
@@ -351,7 +355,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          account_number?: string | null
           address?: string | null
+          avatar_url?: string | null
           created_at?: string | null
           email?: string
           full_name?: string | null
@@ -430,6 +436,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_account_number: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
