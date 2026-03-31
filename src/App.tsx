@@ -23,6 +23,8 @@ import LoanStatus from "./pages/LoanStatus";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotificationPreferences from "./pages/NotificationPreferences";
 import ActivityHistory from "./pages/ActivityHistory";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +42,8 @@ const App = () => (
             <Route path="/business" element={<BusinessBanking />} />
             <Route path="/loans" element={<Loans />} />
             <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route 
