@@ -76,29 +76,40 @@ export function ChatWidget() {
 
   return (
     <>
-      {/* Chat Toggle Button */}
+      {/* WhatsApp-style Chat Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110",
-          !isOpen && "animate-bounce"
+          "fixed bottom-6 left-6 z-50 w-[60px] h-[60px] rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110",
+          isOpen
+            ? "bg-[hsl(0,0%,40%)]"
+            : "bg-[hsl(142,70%,41%)] animate-bounce"
         )}
         aria-label="Open chat"
       >
         {isOpen ? (
-          <X className="h-6 w-6" />
+          <X className="h-7 w-7 text-white" />
         ) : (
-          <MessageCircle className="h-6 w-6" />
+          <svg viewBox="0 0 32 32" className="w-8 h-8 fill-white">
+            <path d="M16.004 3.2C8.93 3.2 3.2 8.73 3.2 15.56c0 2.18.59 4.3 1.7 6.16L3.2 28.8l7.32-1.93a13.1 13.1 0 0 0 5.48 1.21h.01c7.07 0 12.8-5.53 12.8-12.36S23.08 3.2 16 3.2Zm0 22.56a10.9 10.9 0 0 1-5.22-1.34l-.37-.22-3.88 1.02 1.04-3.77-.24-.39A10.38 10.38 0 0 1 5.6 15.56c0-5.74 4.86-10.4 10.83-10.4 5.96 0 10.37 4.66 10.37 10.4 0 5.74-4.81 10.4-10.77 10.4Zm5.94-7.78c-.33-.16-1.93-.95-2.23-1.06-.3-.11-.52-.16-.74.17-.22.32-.85 1.06-1.04 1.28-.19.22-.39.24-.72.08-.33-.16-1.39-.51-2.64-1.63-.98-.87-1.63-1.94-1.83-2.27-.19-.33-.02-.5.14-.67.15-.15.33-.39.49-.59.16-.19.22-.33.33-.55.11-.22.05-.41-.03-.57-.08-.17-.74-1.77-1.01-2.42-.27-.63-.54-.55-.74-.56h-.63c-.22 0-.57.08-.87.41s-1.14 1.11-1.14 2.71 1.17 3.15 1.33 3.36c.17.22 2.3 3.52 5.58 4.93.78.34 1.39.54 1.86.69.78.25 1.49.21 2.06.13.63-.09 1.93-.79 2.2-1.55.27-.77.27-1.42.19-1.55-.08-.14-.3-.22-.63-.38Z" />
+          </svg>
         )}
       </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 left-6 z-50 w-80 sm:w-96 bg-card border border-border rounded-lg shadow-xl overflow-hidden animate-scale-in">
-          {/* Header */}
-          <div className="bg-primary text-primary-foreground p-4">
-            <h3 className="font-semibold">Chat Support</h3>
-            <p className="text-sm opacity-90">We typically reply within minutes</p>
+        <div className="fixed bottom-24 left-6 z-50 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-xl overflow-hidden animate-scale-in">
+          {/* WhatsApp-style Header */}
+          <div className="bg-[hsl(142,70%,41%)] text-white p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+              <svg viewBox="0 0 32 32" className="w-5 h-5 fill-white">
+                <path d="M16 4a12 12 0 1 0 0 24 12 12 0 0 0 0-24Zm0 4a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Zm0 17a9 9 0 0 1-7-3.36C9.03 19.21 14 18 16 18s6.97 1.21 7 3.64A9 9 0 0 1 16 25Z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">MorganFinance Support</h3>
+              <p className="text-xs text-white/80">Online · Replies within minutes</p>
+            </div>
           </div>
 
           {/* Chat Content */}
