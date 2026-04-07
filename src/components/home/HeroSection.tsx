@@ -1,65 +1,80 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, TrendingUp, Lock } from 'lucide-react';
+import { ArrowRight, Shield, TrendingUp, Lock, CheckCircle, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 py-20 lg:py-32">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-primary rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent rounded-full blur-3xl" />
+    <section className="relative overflow-hidden bg-gradient-to-br from-foreground via-foreground to-primary/90 py-20 lg:py-28">
+      {/* Subtle geometric background */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/15 rounded-full blur-[100px]" />
+        {/* Grid pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: 'linear-gradient(hsl(var(--primary-foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary-foreground)) 1px, transparent 1px)',
+            backgroundSize: '60px 60px',
+          }}
+        />
       </div>
 
       <div className="container mx-auto px-4 relative">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Content */}
           <div className="space-y-8 animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-              <Shield className="w-4 h-4" />
-              Trusted by over 2 million customers
+            {/* Trust chip */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/10 border border-primary-foreground/20 text-primary-foreground text-sm font-medium">
+              <Shield className="w-4 h-4 text-success" />
+              FDIC Insured · Trusted by 2M+ Customers
             </div>
-            
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground leading-tight">
-              Banking Made{' '}
-              <span className="text-gradient">Simple, Secure</span>{' '}
-              & Smart
+
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-primary-foreground leading-tight">
+              Secure Banking{' '}
+              <span className="text-accent">You Can Trust</span>
             </h1>
-            
-            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-              Experience next-generation banking with our comprehensive suite of financial services. From personal accounts to collateral-backed loans, we've got you covered.
+
+            <p className="text-lg text-primary-foreground/75 max-w-lg leading-relaxed">
+              Personal & business banking, collateral-backed loans, and secure digital transactions — protected by 256-bit encryption and backed by 50+ years of financial expertise.
             </p>
 
+            {/* Key benefits */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                'No hidden fees or charges',
+                'FDIC insured up to $250K',
+                '24/7 customer support',
+                'Bank-grade security',
+              ].map((benefit) => (
+                <div key={benefit} className="flex items-center gap-2 text-primary-foreground/80 text-sm">
+                  <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
+                  <span>{benefit}</span>
+                </div>
+              ))}
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="gradient-primary shadow-elegant group" asChild>
+              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg group" asChild>
                 <Link to="/register">
-                  Open Account
+                  Get Started Safely
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link to="/about">Learn More</Link>
+              <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" asChild>
+                <Link to="/about">
+                  Learn More About Us
+                </Link>
               </Button>
             </div>
 
-            {/* Trust Badges */}
-            <div className="flex flex-wrap gap-6 pt-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Lock className="w-5 h-5 text-success" />
-                <span>256-bit Encryption</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Shield className="w-5 h-5 text-success" />
-                <span>FDIC Insured</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingUp className="w-5 h-5 text-success" />
-                <span>AAA Rated</span>
-              </div>
+            {/* Contact line */}
+            <div className="flex items-center gap-2 text-primary-foreground/60 text-sm pt-2">
+              <Phone className="w-4 h-4" />
+              <span>Questions? Call us: <a href="tel:+18001234567" className="underline hover:text-primary-foreground transition-colors">+1 (800) 123-4567</a></span>
             </div>
           </div>
 
-          {/* Hero Image/Card */}
+          {/* Hero Card */}
           <div className="relative animate-scale-in" style={{ animationDelay: '0.2s' }}>
             <div className="relative z-10">
               {/* Main Card */}
@@ -114,6 +129,14 @@ export function HeroSection() {
                     <p className="text-xs text-muted-foreground">Savings Growth</p>
                     <p className="font-bold text-foreground">+18.5% <span className="text-success text-xs">↑</span></p>
                   </div>
+                </div>
+              </div>
+
+              {/* Security floating badge */}
+              <div className="absolute -top-4 -right-4 bg-card rounded-2xl shadow-elegant p-3 border border-border animate-fade-in" style={{ animationDelay: '0.6s' }}>
+                <div className="flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-success" />
+                  <span className="text-xs font-semibold text-foreground">256-bit Secured</span>
                 </div>
               </div>
             </div>
