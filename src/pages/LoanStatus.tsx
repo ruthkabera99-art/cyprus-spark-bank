@@ -99,7 +99,7 @@ const LoanStatus = () => {
               <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-elegant">
                 <Shield className="w-5 h-5 text-primary-foreground" />
               </div>
-              <h1 className="text-lg font-serif font-bold text-foreground">SecureBank</h1>
+              <h1 className="text-lg font-serif font-bold text-foreground">MorganFinance Bank</h1>
             </Link>
             <Button variant="ghost" asChild>
               <Link to="/dashboard"><ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard</Link>

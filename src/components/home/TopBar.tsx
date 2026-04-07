@@ -9,9 +9,9 @@ export function TopBar() {
             <Phone className="w-3 h-3" />
             <span>+1 (800) 123-4567</span>
           </a>
-          <a href="mailto:support@securebank.com" className="hidden sm:flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
+          <a href="mailto:support@morganfinancebank.com" className="hidden sm:flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
             <Mail className="w-3 h-3" />
-            <span>support@securebank.com</span>
+            <span>support@morganfinancebank.com</span>
           </a>
         </div>
         <div className="flex items-center gap-4">

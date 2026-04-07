@@ -88,7 +88,7 @@ const BusinessBanking = () => {
             <div className="text-center max-w-2xl mx-auto mb-12">
               <h2 className="text-3xl font-serif font-bold mb-4">Why Businesses Choose Us</h2>
               <p className="text-muted-foreground">
-                Join thousands of businesses that trust SecureBank for their financial needs.
+                Join thousands of businesses that trust MorganFinance Bank for their financial needs.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">

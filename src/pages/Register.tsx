@@ -103,7 +103,7 @@ const Register = () => {
               <Shield className="w-7 h-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-serif font-bold text-foreground">SecureBank</h1>
+              <h1 className="text-xl font-serif font-bold text-foreground">MorganFinance Bank</h1>
               <p className="text-xs text-muted-foreground">Trust & Innovation</p>
             </div>
           </Link>

@@ -110,7 +110,7 @@ const Dashboard = () => {
                 <Shield className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-lg font-serif font-bold text-foreground">SecureBank</h1>
+                <h1 className="text-lg font-serif font-bold text-foreground">MorganFinance Bank</h1>
               </div>
             </Link>
             

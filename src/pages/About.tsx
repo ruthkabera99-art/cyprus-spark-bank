@@ -68,7 +68,7 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-6">
-                About SecureBank
+                About MorganFinance Bank
               </h1>
               <p className="text-lg text-muted-foreground">
                 For over 50 years, we've been committed to providing exceptional banking services built on trust, innovation, and customer focus.
@@ -105,13 +105,13 @@ const About = () => {
               <div>
                 <h2 className="text-3xl font-serif font-bold mb-6">Our Story</h2>
                 <p className="text-muted-foreground mb-4">
-                  SecureBank was founded in 1974 with a simple mission: to provide personalized banking services to our local community. What started as a single branch has grown into a nationwide institution serving over 2 million customers.
+                  MorganFinance Bank was founded in 1974 with a simple mission: to provide personalized banking services to our local community. What started as a single branch has grown into a nationwide institution serving over 2 million customers.
                 </p>
                 <p className="text-muted-foreground mb-4">
                   Throughout our journey, we've remained committed to our founding principles while embracing innovation. We were among the first to offer online banking in the 90s and continue to lead in digital banking technology today.
                 </p>
                 <p className="text-muted-foreground mb-8">
-                  Today, SecureBank is recognized as one of the most trusted financial institutions, managing over $50 billion in assets while maintaining the personal touch that defines who we are.
+                  Today, MorganFinance Bank is recognized as one of the most trusted financial institutions, managing over $50 billion in assets while maintaining the personal touch that defines who we are.
                 </p>
                 <Button className="gradient-primary shadow-elegant" asChild>
                   <Link to="/register">
@@ -171,7 +171,7 @@ const About = () => {
             <div className="text-center max-w-2xl mx-auto mb-10">
               <h2 className="text-3xl font-serif font-bold mb-4">Regulatory Compliance</h2>
               <p className="text-muted-foreground text-sm">
-                SecureBank operates under full regulatory oversight and maintains the highest compliance standards.
+                MorganFinance Bank operates under full regulatory oversight and maintains the highest compliance standards.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">

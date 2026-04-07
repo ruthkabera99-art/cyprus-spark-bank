@@ -33,7 +33,7 @@ export function HowItWorksSection() {
             How It Works
           </h2>
           <p className="text-muted-foreground">
-            Getting started with SecureBank is quick, safe, and straightforward.
+            Getting started with MorganFinance Bank is quick, safe, and straightforward.
           </p>
         </div>
 
