@@ -13,7 +13,7 @@ export function Footer() {
                 <Shield className="w-7 h-7 text-primary-foreground" />
               </div>
               <div>
-                <h2 className="text-xl font-serif font-bold">SecureBank</h2>
+                <h2 className="text-xl font-serif font-bold">MorganFinance Bank</h2>
                 <p className="text-xs opacity-70">Trust & Innovation</p>
               </div>
             </div>
@@ -89,7 +89,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-primary" />
-                <span className="text-sm opacity-80">support@securebank.com</span>
+                <span className="text-sm opacity-80">support@morganfinancebank.com</span>
               </li>
             </ul>
 
@@ -110,7 +110,7 @@ export function Footer() {
         <div className="border-t border-background/20 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm opacity-60">
-              © {new Date().getFullYear()} SecureBank. All rights reserved. FDIC Insured. Equal Housing Lender.
+              © {new Date().getFullYear()} MorganFinance Bank. All rights reserved. FDIC Insured. Equal Housing Lender.
             </p>
             <div className="flex gap-6">
               <Link to="/privacy" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Privacy Policy</Link>

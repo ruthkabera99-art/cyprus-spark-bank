@@ -13,7 +13,7 @@ const TermsOfService = () => {
           <div className="prose prose-sm max-w-none space-y-8 text-muted-foreground">
             <section>
               <h2 className="text-xl font-serif font-semibold text-foreground mb-3">1. Acceptance of Terms</h2>
-              <p>By accessing or using SecureBank's website, mobile applications, or any of our banking services, you agree to be bound by these Terms of Service. If you do not agree, please do not use our services.</p>
+              <p>By accessing or using MorganFinance Bank's website, mobile applications, or any of our banking services, you agree to be bound by these Terms of Service. If you do not agree, please do not use our services.</p>
             </section>
 
             <section>
@@ -43,7 +43,7 @@ const TermsOfService = () => {
 
             <section>
               <h2 className="text-xl font-serif font-semibold text-foreground mb-3">6. Limitation of Liability</h2>
-              <p>SecureBank shall not be liable for any indirect, incidental, special, or consequential damages arising from the use of our services. Our total liability shall not exceed the amount of fees paid by you in the twelve (12) months preceding the claim.</p>
+              <p>MorganFinance Bank shall not be liable for any indirect, incidental, special, or consequential damages arising from the use of our services. Our total liability shall not exceed the amount of fees paid by you in the twelve (12) months preceding the claim.</p>
             </section>
 
             <section>

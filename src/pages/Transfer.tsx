@@ -259,7 +259,7 @@ const Transfer = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Send to Another User</CardTitle>
-                  <CardDescription>Transfer USD to another SecureBank user by email</CardDescription>
+                  <CardDescription>Transfer USD to another MorganFinance Bank user by email</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <Card className="bg-muted/50">

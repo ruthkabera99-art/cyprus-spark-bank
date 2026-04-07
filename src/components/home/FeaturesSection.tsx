@@ -39,7 +39,7 @@ export function FeaturesSection() {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-4">
-            Why Choose SecureBank?
+            Why Choose MorganFinance Bank?
           </h2>
           <p className="text-muted-foreground">
             We combine cutting-edge technology with decades of banking expertise to deliver an unmatched banking experience.

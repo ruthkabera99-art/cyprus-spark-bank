@@ -18,7 +18,7 @@ export function CTASection() {
               Ready to Start Banking Smarter?
             </h2>
             <p className="text-primary-foreground/80 mb-8 text-lg">
-              Join over 2 million customers who trust SecureBank for their financial needs. Open your account in minutes.
+              Join over 2 million customers who trust MorganFinance Bank for their financial needs. Open your account in minutes.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

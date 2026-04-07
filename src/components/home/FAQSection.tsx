@@ -7,7 +7,7 @@ import {
 
 const faqs = [
   {
-    question: 'Is my money safe with SecureBank?',
+    question: 'Is my money safe with MorganFinance Bank?',
     answer: 'Yes. All deposits are FDIC insured up to $250,000 per depositor, per ownership category. We use 256-bit SSL encryption, multi-factor authentication, and undergo regular SOC 2 Type II security audits. Your funds are protected by the same standards used by the largest financial institutions.',
   },
   {
@@ -31,8 +31,8 @@ const faqs = [
     answer: 'We understand that financial difficulties can arise. If you anticipate missing a payment, contact us immediately. We offer hardship programs and may be able to adjust your payment schedule. Late payments may incur fees and could affect your credit score. For collateral-backed loans, sustained non-payment may result in collateral liquidation as outlined in your loan agreement.',
   },
   {
-    question: 'Does SecureBank guarantee investment returns?',
-    answer: 'No. SecureBank does not guarantee returns on any investment product. All investments carry risk, including the potential loss of principal. Past performance is not indicative of future results. We encourage all customers to consult with a qualified financial advisor before making investment decisions.',
+    question: 'Does MorganFinance Bank guarantee investment returns?',
+    answer: 'No. MorganFinance Bank does not guarantee returns on any investment product. All investments carry risk, including the potential loss of principal. Past performance is not indicative of future results. We encourage all customers to consult with a qualified financial advisor before making investment decisions.',
   },
   {
     question: 'How can I contact support?',

@@ -4,21 +4,21 @@ const testimonials = [
   {
     name: 'Sarah Mitchell',
     role: 'Small Business Owner',
-    text: 'SecureBank has been instrumental in growing my business. Their collateral loan process was transparent, and I always knew exactly where I stood. The team genuinely cares about their clients.',
+    text: 'MorganFinance Bank has been instrumental in growing my business. Their collateral loan process was transparent, and I always knew exactly where I stood. The team genuinely cares about their clients.',
     rating: 5,
     years: 'Customer since 2018',
   },
   {
     name: 'David Chen',
     role: 'Software Engineer',
-    text: 'I switched to SecureBank for the security features and stayed for the service. The 24/7 support team resolved my issue within minutes. My deposits are FDIC insured, which gives me real peace of mind.',
+    text: 'I switched to MorganFinance Bank for the security features and stayed for the service. The 24/7 support team resolved my issue within minutes. My deposits are FDIC insured, which gives me real peace of mind.',
     rating: 5,
     years: 'Customer since 2020',
   },
   {
     name: 'Maria Rodriguez',
     role: 'Freelance Consultant',
-    text: 'As a freelancer, I need a bank that makes transfers fast and fees fair. SecureBank delivers on both. Their mobile experience is the best I\'ve used, and I appreciate the clear fee disclosures.',
+    text: 'As a freelancer, I need a bank that makes transfers fast and fees fair. MorganFinance Bank delivers on both. Their mobile experience is the best I\'ve used, and I appreciate the clear fee disclosures.',
     rating: 5,
     years: 'Customer since 2021',
   },
@@ -33,7 +33,7 @@ export function TestimonialsSection() {
             What Our Customers Say
           </h2>
           <p className="text-muted-foreground">
-            Real feedback from real customers who trust SecureBank with their finances.
+            Real feedback from real customers who trust MorganFinance Bank with their finances.
           </p>
         </div>
 
