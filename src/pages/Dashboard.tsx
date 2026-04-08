@@ -122,7 +122,7 @@ const Dashboard = () => {
                 </Link>
               </Button>
               <Button variant="ghost" size="icon" asChild>
-                <Link to="/dashboard/notifications">
+                <Link to="/dashboard/profile">
                   <Settings className="w-5 h-5" />
                 </Link>
               </Button>
