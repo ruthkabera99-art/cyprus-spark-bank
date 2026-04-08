@@ -128,6 +128,7 @@ export function useUpdateUserProfile() {
         full_name?: string;
         phone?: string;
         address?: string;
+        created_at?: string;
       }
     }) => {
       const { data, error } = await supabase
