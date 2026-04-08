@@ -23,6 +23,7 @@ import {
   History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CryptoCard } from '@/components/dashboard/CryptoCard';
@@ -105,12 +106,16 @@ const Dashboard = () => {
       <header className="sticky top-0 z-50 glass-effect border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-elegant">
-                <Shield className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-lg font-serif font-bold text-foreground">MorganFinance Bank</h1>
+            <Link to="/dashboard/profile" className="flex items-center gap-3">
+              <Avatar className="w-10 h-10 border-2 border-primary/20">
+                <AvatarImage src={profile?.avatar_url || undefined} alt="Profile" />
+                <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
+                  {profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || user.email?.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="hidden sm:block">
+                <p className="text-sm font-semibold text-foreground leading-tight">{profile?.full_name || 'User'}</p>
+                <p className="text-xs text-muted-foreground leading-tight">{user.email}</p>
               </div>
             </Link>
             
