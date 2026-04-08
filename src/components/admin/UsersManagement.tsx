@@ -66,6 +66,7 @@ export function UsersManagement() {
     btc_balance: '',
     eth_balance: '',
     usdt_balance: '',
+    created_at: '',
   });
 
   const filteredUsers = users?.filter(
@@ -109,6 +110,7 @@ export function UsersManagement() {
       btc_balance: String(btc?.amount || 0),
       eth_balance: String(eth?.amount || 0),
       usdt_balance: String(usdt?.amount || 0),
+      created_at: user.created_at ? format(new Date(user.created_at), "yyyy-MM-dd'T'HH:mm") : '',
     });
     setEditDialogOpen(true);
   };
@@ -124,6 +126,7 @@ export function UsersManagement() {
           full_name: formData.full_name,
           phone: formData.phone,
           address: formData.address,
+          created_at: formData.created_at ? new Date(formData.created_at).toISOString() : undefined,
         },
       });
 
@@ -480,6 +483,14 @@ export function UsersManagement() {
               <Input
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Joined Date</Label>
+              <Input
+                type="datetime-local"
+                value={formData.created_at}
+                onChange={(e) => setFormData({ ...formData, created_at: e.target.value })}
               />
             </div>
             <div className="space-y-2">
