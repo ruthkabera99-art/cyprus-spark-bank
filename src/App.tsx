@@ -27,7 +27,6 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ProfileSettings from "./pages/ProfileSettings";
 import NotFound from "./pages/NotFound";
-import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -82,7 +81,11 @@ const App = () => (
             />
             <Route 
               path="/admin" 
-              element={<AdminRoute><AdminDashboard /></AdminRoute>} 
+            element={<AdminRoute><AdminDashboard /></AdminRoute>} 
+            />
+            <Route 
+              path="/dashboard/profile" 
+              element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} 
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
