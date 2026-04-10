@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Building2, Bitcoin, Copy, CheckCircle2, Loader2, Clock, Info, CreditCard, Lock } from "lucide-react";
+import { Building2, Bitcoin, Copy, CheckCircle2, Loader2, Clock, Info, CreditCard, Lock, Wallet, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateTransaction } from "@/hooks/useTransactions";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +38,11 @@ const Deposit = () => {
   const [cardCvv, setCardCvv] = useState("");
   const [cardHolderName, setCardHolderName] = useState("");
   const [cardAmount, setCardAmount] = useState("");
+
+  // Digital wallet state
+  const [selectedWallet, setSelectedWallet] = useState("");
+  const [walletAmount, setWalletAmount] = useState("");
+  const [walletEmail, setWalletEmail] = useState("");
 
   const formatCardNumber = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 16);
@@ -169,6 +174,51 @@ const Deposit = () => {
     }
   };
 
+  const digitalWallets = [
+    { id: 'paypal', name: 'PayPal', icon: '🅿️', color: 'bg-blue-500', desc: 'Pay with your PayPal account' },
+    { id: 'apple_pay', name: 'Apple Pay', icon: '🍎', color: 'bg-black', desc: 'Pay with Apple Pay' },
+    { id: 'google_pay', name: 'Google Pay', icon: '🔵', color: 'bg-white border', desc: 'Pay with Google Pay' },
+    { id: 'zelle', name: 'Zelle', icon: '💜', color: 'bg-purple-600', desc: 'Send via Zelle' },
+    { id: 'venmo', name: 'Venmo', icon: '💙', color: 'bg-blue-400', desc: 'Pay with Venmo' },
+    { id: 'cashapp', name: 'Cash App', icon: '💚', color: 'bg-green-500', desc: 'Pay with Cash App' },
+    { id: 'skrill', name: 'Skrill', icon: '💰', color: 'bg-purple-500', desc: 'Pay with Skrill' },
+    { id: 'wise', name: 'Wise (TransferWise)', icon: '🌍', color: 'bg-green-400', desc: 'Pay with Wise' },
+  ];
+
+  const handleDigitalWalletDeposit = async () => {
+    if (!selectedWallet || !walletAmount) {
+      toast({ title: "Missing Information", description: "Please select a wallet and enter an amount", variant: "destructive" });
+      return;
+    }
+    const amount = parseFloat(walletAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({ title: "Invalid Amount", description: "Please enter a valid amount", variant: "destructive" });
+      return;
+    }
+    if (amount > 25000) {
+      toast({ title: "Limit Exceeded", description: "Maximum digital wallet deposit is $25,000 per transaction", variant: "destructive" });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const walletName = digitalWallets.find(w => w.id === selectedWallet)?.name || selectedWallet;
+      await createTransaction.mutateAsync({
+        type: 'deposit', category: 'traditional', currency: 'USD', amount,
+        status: 'pending',
+        description: `${walletName} Deposit${walletEmail ? ` (${walletEmail})` : ''}`,
+        reference_id: `DW-DEP-${Date.now()}`, recipient_address: null, network_fee: null,
+      });
+      setRequestSubmitted(true);
+      toast({ title: "Deposit Request Submitted", description: `Your ${walletName} deposit request is pending admin approval.` });
+      setWalletAmount(""); setSelectedWallet(""); setWalletEmail("");
+    } catch (error) {
+      toast({ title: "Request Failed", description: "Something went wrong. Please try again.", variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   if (!user) return null;
 
   const cardType = getCardType(cardNumber);
@@ -200,14 +250,18 @@ const Deposit = () => {
           )}
 
           <Tabs defaultValue="traditional" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
               <TabsTrigger value="traditional" className="flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                Bank Transfer
+                Bank
               </TabsTrigger>
               <TabsTrigger value="creditcard" className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4" />
-                Credit Card
+                Card
+              </TabsTrigger>
+              <TabsTrigger value="digitalwallet" className="flex items-center gap-2">
+                <Wallet className="h-4 w-4" />
+                Wallets
               </TabsTrigger>
               <TabsTrigger value="crypto" className="flex items-center gap-2">
                 <Bitcoin className="h-4 w-4" />
@@ -364,6 +418,98 @@ const Deposit = () => {
                   <Button onClick={handleCreditCardDeposit} className="w-full" disabled={isProcessing}>
                     {isProcessing ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>) : (<><CreditCard className="mr-2 h-4 w-4" />Deposit {cardAmount ? `$${parseFloat(cardAmount).toFixed(2)}` : ''}</>)}
                   </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Digital Wallet Tab */}
+            <TabsContent value="digitalwallet">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wallet className="h-5 w-5 text-primary" />
+                    Digital Wallet Deposit
+                  </CardTitle>
+                  <CardDescription>Deposit using PayPal, Apple Pay, Google Pay, Zelle & more</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label>Select Payment Wallet</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {digitalWallets.map((wallet) => (
+                        <button
+                          key={wallet.id}
+                          onClick={() => setSelectedWallet(wallet.id)}
+                          className={`p-4 rounded-xl border-2 transition-all text-center hover:shadow-md ${
+                            selectedWallet === wallet.id
+                              ? "border-primary bg-primary/10 shadow-md"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="text-2xl mb-1">{wallet.icon}</div>
+                          <div className="text-xs font-semibold">{wallet.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedWallet && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="walletEmail">
+                          {selectedWallet === 'zelle' ? 'Zelle Email / Phone' :
+                           selectedWallet === 'paypal' ? 'PayPal Email' :
+                           selectedWallet === 'venmo' ? 'Venmo Username' :
+                           selectedWallet === 'cashapp' ? 'Cash App $Cashtag' :
+                           'Account Email (Optional)'}
+                        </Label>
+                        <Input
+                          id="walletEmail"
+                          placeholder={
+                            selectedWallet === 'zelle' ? 'your@email.com or phone number' :
+                            selectedWallet === 'cashapp' ? '$YourCashtag' :
+                            selectedWallet === 'venmo' ? '@username' :
+                            'your@email.com'
+                          }
+                          value={walletEmail}
+                          onChange={(e) => setWalletEmail(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="walletAmount">Deposit Amount (USD)</Label>
+                        <Input
+                          id="walletAmount"
+                          type="number"
+                          placeholder="Enter amount"
+                          value={walletAmount}
+                          onChange={(e) => setWalletAmount(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">Maximum $25,000 per transaction</p>
+                      </div>
+
+                      <Card className="bg-muted/50">
+                        <CardContent className="pt-4">
+                          <p className="text-sm text-muted-foreground">
+                            <strong>How it works:</strong> Submit your deposit request below. Our team will send you payment instructions for {digitalWallets.find(w => w.id === selectedWallet)?.name} and verify the transaction.
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Lock className="h-3.5 w-3.5 text-green-500" />
+                        <span>End-to-end encrypted • Funds protected</span>
+                      </div>
+
+                      <Button onClick={handleDigitalWalletDeposit} className="w-full" disabled={isProcessing}>
+                        {isProcessing ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+                        ) : (
+                          <><Wallet className="mr-2 h-4 w-4" />Submit {digitalWallets.find(w => w.id === selectedWallet)?.name} Deposit</>
+                        )}
+                      </Button>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
