@@ -174,6 +174,51 @@ const Deposit = () => {
     }
   };
 
+  const digitalWallets = [
+    { id: 'paypal', name: 'PayPal', icon: '🅿️', color: 'bg-blue-500', desc: 'Pay with your PayPal account' },
+    { id: 'apple_pay', name: 'Apple Pay', icon: '🍎', color: 'bg-black', desc: 'Pay with Apple Pay' },
+    { id: 'google_pay', name: 'Google Pay', icon: '🔵', color: 'bg-white border', desc: 'Pay with Google Pay' },
+    { id: 'zelle', name: 'Zelle', icon: '💜', color: 'bg-purple-600', desc: 'Send via Zelle' },
+    { id: 'venmo', name: 'Venmo', icon: '💙', color: 'bg-blue-400', desc: 'Pay with Venmo' },
+    { id: 'cashapp', name: 'Cash App', icon: '💚', color: 'bg-green-500', desc: 'Pay with Cash App' },
+    { id: 'skrill', name: 'Skrill', icon: '💰', color: 'bg-purple-500', desc: 'Pay with Skrill' },
+    { id: 'wise', name: 'Wise (TransferWise)', icon: '🌍', color: 'bg-green-400', desc: 'Pay with Wise' },
+  ];
+
+  const handleDigitalWalletDeposit = async () => {
+    if (!selectedWallet || !walletAmount) {
+      toast({ title: "Missing Information", description: "Please select a wallet and enter an amount", variant: "destructive" });
+      return;
+    }
+    const amount = parseFloat(walletAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({ title: "Invalid Amount", description: "Please enter a valid amount", variant: "destructive" });
+      return;
+    }
+    if (amount > 25000) {
+      toast({ title: "Limit Exceeded", description: "Maximum digital wallet deposit is $25,000 per transaction", variant: "destructive" });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const walletName = digitalWallets.find(w => w.id === selectedWallet)?.name || selectedWallet;
+      await createTransaction.mutateAsync({
+        type: 'deposit', category: 'traditional', currency: 'USD', amount,
+        status: 'pending',
+        description: `${walletName} Deposit${walletEmail ? ` (${walletEmail})` : ''}`,
+        reference_id: `DW-DEP-${Date.now()}`, recipient_address: null, network_fee: null,
+      });
+      setRequestSubmitted(true);
+      toast({ title: "Deposit Request Submitted", description: `Your ${walletName} deposit request is pending admin approval.` });
+      setWalletAmount(""); setSelectedWallet(""); setWalletEmail("");
+    } catch (error) {
+      toast({ title: "Request Failed", description: "Something went wrong. Please try again.", variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   if (!user) return null;
 
   const cardType = getCardType(cardNumber);
