@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Building2, Bitcoin, Copy, CheckCircle2, Loader2, Clock, Info, CreditCard, Lock } from "lucide-react";
+import { Building2, Bitcoin, Copy, CheckCircle2, Loader2, Clock, Info, CreditCard, Lock, Wallet, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateTransaction } from "@/hooks/useTransactions";
 import { useAuth } from "@/contexts/AuthContext";
