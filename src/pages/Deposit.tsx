@@ -226,6 +226,25 @@ const Deposit = () => {
                         <SelectItem value="wire">Wire Transfer</SelectItem>
                         <SelectItem value="ach">ACH Transfer</SelectItem>
                         <SelectItem value="check">Check Deposit</SelectItem>
+                        <SelectItem value="swift">SWIFT Transfer</SelectItem>
+                        <SelectItem value="sepa">SEPA Transfer</SelectItem>
+                        <SelectItem value="iban">IBAN Transfer</SelectItem>
+                        <SelectItem value="rtgs">RTGS (Real-Time Gross Settlement)</SelectItem>
+                        <SelectItem value="neft">NEFT Transfer</SelectItem>
+                        <SelectItem value="imps">IMPS (Immediate Payment Service)</SelectItem>
+                        <SelectItem value="fedwire">Fedwire Transfer</SelectItem>
+                        <SelectItem value="chaps">CHAPS (UK Clearing House)</SelectItem>
+                        <SelectItem value="bacs">BACS Transfer</SelectItem>
+                        <SelectItem value="eft">EFT (Electronic Funds Transfer)</SelectItem>
+                        <SelectItem value="interac">Interac e-Transfer</SelectItem>
+                        <SelectItem value="fps">Faster Payments (FPS)</SelectItem>
+                        <SelectItem value="upi">UPI Transfer</SelectItem>
+                        <SelectItem value="pix">PIX Transfer (Brazil)</SelectItem>
+                        <SelectItem value="cash_deposit">Cash Deposit at Branch</SelectItem>
+                        <SelectItem value="money_order">Money Order</SelectItem>
+                        <SelectItem value="cashiers_check">Cashier's Check</SelectItem>
+                        <SelectItem value="direct_deposit">Direct Deposit / Payroll</SelectItem>
+                        <SelectItem value="correspondent">Correspondent Bank Transfer</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
