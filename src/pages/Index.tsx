@@ -12,6 +12,7 @@ import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { FAQSection } from '@/components/home/FAQSection';
 import { DisclaimerSection } from '@/components/home/DisclaimerSection';
 import { CTASection } from '@/components/home/CTASection';
+import { DownloadAppSection } from '@/components/home/DownloadAppSection';
 
 const Index = () => {
   return (
@@ -28,6 +29,7 @@ const Index = () => {
         <TrustBadgesSection />
         <TestimonialsSection />
         <FAQSection />
+        <DownloadAppSection />
         <CTASection />
         <DisclaimerSection />
       </main>
