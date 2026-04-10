@@ -39,6 +39,11 @@ const Deposit = () => {
   const [cardHolderName, setCardHolderName] = useState("");
   const [cardAmount, setCardAmount] = useState("");
 
+  // Digital wallet state
+  const [selectedWallet, setSelectedWallet] = useState("");
+  const [walletAmount, setWalletAmount] = useState("");
+  const [walletEmail, setWalletEmail] = useState("");
+
   const formatCardNumber = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 16);
     return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
