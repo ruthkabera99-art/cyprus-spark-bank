@@ -422,6 +422,98 @@ const Deposit = () => {
               </Card>
             </TabsContent>
 
+            {/* Digital Wallet Tab */}
+            <TabsContent value="digitalwallet">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wallet className="h-5 w-5 text-primary" />
+                    Digital Wallet Deposit
+                  </CardTitle>
+                  <CardDescription>Deposit using PayPal, Apple Pay, Google Pay, Zelle & more</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label>Select Payment Wallet</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {digitalWallets.map((wallet) => (
+                        <button
+                          key={wallet.id}
+                          onClick={() => setSelectedWallet(wallet.id)}
+                          className={`p-4 rounded-xl border-2 transition-all text-center hover:shadow-md ${
+                            selectedWallet === wallet.id
+                              ? "border-primary bg-primary/10 shadow-md"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="text-2xl mb-1">{wallet.icon}</div>
+                          <div className="text-xs font-semibold">{wallet.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedWallet && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="walletEmail">
+                          {selectedWallet === 'zelle' ? 'Zelle Email / Phone' :
+                           selectedWallet === 'paypal' ? 'PayPal Email' :
+                           selectedWallet === 'venmo' ? 'Venmo Username' :
+                           selectedWallet === 'cashapp' ? 'Cash App $Cashtag' :
+                           'Account Email (Optional)'}
+                        </Label>
+                        <Input
+                          id="walletEmail"
+                          placeholder={
+                            selectedWallet === 'zelle' ? 'your@email.com or phone number' :
+                            selectedWallet === 'cashapp' ? '$YourCashtag' :
+                            selectedWallet === 'venmo' ? '@username' :
+                            'your@email.com'
+                          }
+                          value={walletEmail}
+                          onChange={(e) => setWalletEmail(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="walletAmount">Deposit Amount (USD)</Label>
+                        <Input
+                          id="walletAmount"
+                          type="number"
+                          placeholder="Enter amount"
+                          value={walletAmount}
+                          onChange={(e) => setWalletAmount(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">Maximum $25,000 per transaction</p>
+                      </div>
+
+                      <Card className="bg-muted/50">
+                        <CardContent className="pt-4">
+                          <p className="text-sm text-muted-foreground">
+                            <strong>How it works:</strong> Submit your deposit request below. Our team will send you payment instructions for {digitalWallets.find(w => w.id === selectedWallet)?.name} and verify the transaction.
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Lock className="h-3.5 w-3.5 text-green-500" />
+                        <span>End-to-end encrypted • Funds protected</span>
+                      </div>
+
+                      <Button onClick={handleDigitalWalletDeposit} className="w-full" disabled={isProcessing}>
+                        {isProcessing ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+                        ) : (
+                          <><Wallet className="mr-2 h-4 w-4" />Submit {digitalWallets.find(w => w.id === selectedWallet)?.name} Deposit</>
+                        )}
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             {/* Crypto Tab */}
             <TabsContent value="crypto">
               <Card>
