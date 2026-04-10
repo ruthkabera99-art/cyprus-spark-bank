@@ -250,14 +250,18 @@ const Deposit = () => {
           )}
 
           <Tabs defaultValue="traditional" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
               <TabsTrigger value="traditional" className="flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                Bank Transfer
+                Bank
               </TabsTrigger>
               <TabsTrigger value="creditcard" className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4" />
-                Credit Card
+                Card
+              </TabsTrigger>
+              <TabsTrigger value="digitalwallet" className="flex items-center gap-2">
+                <Wallet className="h-4 w-4" />
+                Wallets
               </TabsTrigger>
               <TabsTrigger value="crypto" className="flex items-center gap-2">
                 <Bitcoin className="h-4 w-4" />
