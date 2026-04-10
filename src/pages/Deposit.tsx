@@ -82,7 +82,15 @@ const Deposit = () => {
       await createTransaction.mutateAsync({
         type: 'deposit', category: 'traditional', currency: 'USD', amount,
         status: 'pending',
-        description: `${depositMethod === 'wire' ? 'Wire Transfer' : depositMethod === 'ach' ? 'ACH Transfer' : 'Check'} Deposit Request`,
+        const methodLabels: Record<string, string> = {
+          wire: 'Wire Transfer', ach: 'ACH Transfer', check: 'Check Deposit', swift: 'SWIFT Transfer',
+          sepa: 'SEPA Transfer', iban: 'IBAN Transfer', rtgs: 'RTGS', neft: 'NEFT Transfer',
+          imps: 'IMPS', fedwire: 'Fedwire', chaps: 'CHAPS', bacs: 'BACS Transfer',
+          eft: 'EFT', interac: 'Interac e-Transfer', fps: 'Faster Payments', upi: 'UPI Transfer',
+          pix: 'PIX Transfer', cash_deposit: 'Cash Deposit', money_order: 'Money Order',
+          cashiers_check: "Cashier's Check", direct_deposit: 'Direct Deposit', correspondent: 'Correspondent Bank Transfer',
+        };
+        description: `${methodLabels[depositMethod] || depositMethod} Deposit Request`,
         reference_id: `DEP-REQ-${Date.now()}`, recipient_address: null, network_fee: null,
       });
       setRequestSubmitted(true);
