@@ -44,6 +44,7 @@ const App = () => {
 
   return (
   <QueryClientProvider client={queryClient}>
+    {showSplash && <SplashScreen onComplete={hideSplash} />}
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
@@ -107,6 +108,7 @@ const App = () => {
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
