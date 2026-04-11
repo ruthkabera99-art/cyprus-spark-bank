@@ -1,8 +1,10 @@
+import { useState, useCallback } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { SplashScreen } from "@/components/SplashScreen";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
@@ -31,8 +33,18 @@ import Install from "./pages/Install";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  const [showSplash, setShowSplash] = useState(() => {
+    // Only show splash in standalone PWA mode
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || (window.navigator as any).standalone === true;
+    return isStandalone;
+  });
+  const hideSplash = useCallback(() => setShowSplash(false), []);
+
+  return (
   <QueryClientProvider client={queryClient}>
+    {showSplash && <SplashScreen onComplete={hideSplash} />}
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
@@ -96,6 +108,7 @@ const App = () => (
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
