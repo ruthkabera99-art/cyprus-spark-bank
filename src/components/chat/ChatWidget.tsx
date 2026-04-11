@@ -116,7 +116,7 @@ export function ChatWidget() {
           {/* Chat Content */}
           {showNameForm && !conversation ? (
             // Name/Email Form
-            <form onSubmit={handleStartChat} className="p-4 space-y-4">
+            <form onSubmit={handleStartChat} className="p-4 space-y-3">
               <p className="text-sm text-muted-foreground">
                 Please provide your details to start chatting:
               </p>
@@ -131,6 +131,12 @@ export function ChatWidget() {
                 placeholder="Your email (optional)"
                 value={visitorEmail}
                 onChange={(e) => setVisitorEmail(e.target.value)}
+              />
+              <Input
+                type="tel"
+                placeholder="Your phone number (optional)"
+                value={visitorPhone}
+                onChange={(e) => setVisitorPhone(e.target.value)}
               />
               <Button 
                 type="submit" 
