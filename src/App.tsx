@@ -33,7 +33,16 @@ import Install from "./pages/Install";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  const [showSplash, setShowSplash] = useState(() => {
+    // Only show splash in standalone PWA mode
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || (window.navigator as any).standalone === true;
+    return isStandalone;
+  });
+  const hideSplash = useCallback(() => setShowSplash(false), []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
