@@ -121,16 +121,20 @@ export function useVisitorChat() {
     },
   });
 
-  // Auto-reply timer ref
+  // Auto-reply timer ref and typing state
   const autoReplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isAwaitingReply, setIsAwaitingReply] = useState(false);
 
   const triggerAutoReply = useCallback(async (convId: string, visitorMessage: string) => {
+    setIsAwaitingReply(true);
     try {
       await supabase.functions.invoke('chat-auto-reply', {
         body: { conversation_id: convId, visitor_message: visitorMessage },
       });
     } catch (err) {
       console.error('Auto-reply failed:', err);
+    } finally {
+      setIsAwaitingReply(false);
     }
   }, []);
 
@@ -163,17 +167,15 @@ export function useVisitorChat() {
         clearTimeout(autoReplyTimerRef.current);
       }
       
-      // Set a 30-second timer: if no admin replies, trigger AI auto-reply
+      // Set a 10-second timer: if no admin replies, trigger AI auto-reply
       autoReplyTimerRef.current = setTimeout(() => {
-        // Check if an admin has replied since the visitor message
         const currentMessages = queryClient.getQueryData<ChatMessage[]>(['chat-messages', convId]);
         const lastMessage = currentMessages?.[currentMessages.length - 1];
         
-        // Only auto-reply if the last message is still from the visitor
         if (!lastMessage || lastMessage.sender_type === 'visitor') {
           triggerAutoReply(convId, text);
         }
-      }, 30000); // 30 seconds
+      }, 10000); // 10 seconds
     },
     onError: () => {
       toast.error('Failed to send message');
@@ -218,6 +220,7 @@ export function useVisitorChat() {
     conversation,
     messages,
     isLoading: conversationLoading || messagesLoading,
+    isAwaitingReply,
     createConversation,
     sendMessage,
     visitorId,
