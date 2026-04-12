@@ -220,6 +220,7 @@ export function useVisitorChat() {
     conversation,
     messages,
     isLoading: conversationLoading || messagesLoading,
+    isAwaitingReply,
     createConversation,
     sendMessage,
     visitorId,

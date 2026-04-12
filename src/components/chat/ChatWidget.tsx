@@ -21,6 +21,7 @@ export function ChatWidget() {
     conversation, 
     messages, 
     isLoading, 
+    isAwaitingReply,
     createConversation, 
     sendMessage 
   } = useVisitorChat();
