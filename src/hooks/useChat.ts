@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -121,6 +121,19 @@ export function useVisitorChat() {
     },
   });
 
+  // Auto-reply timer ref
+  const autoReplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerAutoReply = useCallback(async (convId: string, visitorMessage: string) => {
+    try {
+      await supabase.functions.invoke('chat-auto-reply', {
+        body: { conversation_id: convId, visitor_message: visitorMessage },
+      });
+    } catch (err) {
+      console.error('Auto-reply failed:', err);
+    }
+  }, []);
+
   // Send message mutation
   const sendMessage = useMutation({
     mutationFn: async ({ message, convId }: { message: string; convId?: string }) => {
@@ -140,15 +153,41 @@ export function useVisitorChat() {
         .single();
       
       if (error) throw error;
-      return data as ChatMessage;
+      return { message: data as ChatMessage, convId: targetConvId, text: message };
     },
-    onSuccess: () => {
+    onSuccess: ({ convId, text }) => {
       queryClient.invalidateQueries({ queryKey: ['chat-messages', conversationId] });
+      
+      // Clear any existing auto-reply timer
+      if (autoReplyTimerRef.current) {
+        clearTimeout(autoReplyTimerRef.current);
+      }
+      
+      // Set a 30-second timer: if no admin replies, trigger AI auto-reply
+      autoReplyTimerRef.current = setTimeout(() => {
+        // Check if an admin has replied since the visitor message
+        const currentMessages = queryClient.getQueryData<ChatMessage[]>(['chat-messages', convId]);
+        const lastMessage = currentMessages?.[currentMessages.length - 1];
+        
+        // Only auto-reply if the last message is still from the visitor
+        if (!lastMessage || lastMessage.sender_type === 'visitor') {
+          triggerAutoReply(convId, text);
+        }
+      }, 30000); // 30 seconds
     },
     onError: () => {
       toast.error('Failed to send message');
     },
   });
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoReplyTimerRef.current) {
+        clearTimeout(autoReplyTimerRef.current);
+      }
+    };
+  }, []);
 
   // Subscribe to new messages in real-time
   useEffect(() => {
