@@ -178,8 +178,15 @@ export function ChatWidget() {
                         )}
                       >
                         {msg.sender_type === 'admin' && (
-                          <span className="text-[10px] font-medium text-muted-foreground mb-1">
-                            MorganFinance Support
+                          <span className="text-[10px] font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                            {msg.sender_id === 'ai-assistant' ? (
+                              <>
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                AI Assistant
+                              </>
+                            ) : (
+                              'MorganFinance Support'
+                            )}
                           </span>
                         )}
                         <p className="text-sm break-words">{msg.message}</p>
