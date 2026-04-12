@@ -177,6 +177,11 @@ export function ChatWidget() {
                             : "mr-auto bg-muted"
                         )}
                       >
+                        {msg.sender_type === 'admin' && (
+                          <span className="text-[10px] font-medium text-muted-foreground mb-1">
+                            MorganFinance Support
+                          </span>
+                        )}
                         <p className="text-sm break-words">{msg.message}</p>
                         <span 
                           className={cn(
@@ -190,6 +195,19 @@ export function ChatWidget() {
                         </span>
                       </div>
                     ))}
+                    {/* Typing indicator */}
+                    {isAwaitingReply && (
+                      <div className="mr-auto bg-muted rounded-lg p-3 max-w-[80%] animate-fade-in">
+                        <span className="text-[10px] font-medium text-muted-foreground mb-1 block">
+                          MorganFinance Support
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </ScrollArea>
