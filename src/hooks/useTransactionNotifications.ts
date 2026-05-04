@@ -20,6 +20,7 @@ export function useTransactionNotifications() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { showNotification } = usePushNotifications();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -61,6 +62,8 @@ export function useTransactionNotifications() {
             description,
           });
 
+          showNotification(title, { body: description, tag: `tx-${tx.id}`, data: { url: '/dashboard' } });
+
           // Refresh transaction data
           queryClient.invalidateQueries({ queryKey: ['transactions', user.id] });
           queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
@@ -100,6 +103,12 @@ export function useTransactionNotifications() {
               variant,
             });
 
+            showNotification(title, {
+              body: `Your ${tx.type} of ${tx.amount} ${tx.currency} is now ${tx.status}`,
+              tag: `tx-${tx.id}-status`,
+              data: { url: '/dashboard' },
+            });
+
             // Refresh data
             queryClient.invalidateQueries({ queryKey: ['transactions', user.id] });
             queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
@@ -112,5 +121,5 @@ export function useTransactionNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, toast, queryClient]);
+  }, [user?.id, toast, queryClient, showNotification]);
 }
