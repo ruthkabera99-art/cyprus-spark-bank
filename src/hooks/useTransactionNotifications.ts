@@ -66,7 +66,11 @@ export function useTransactionNotifications() {
             body: description,
             tag: `tx-${tx.id}`,
             data: { url: `/dashboard/activity?tx=${tx.id}` },
-          });
+            actions: [
+              { action: 'view', title: 'View details' },
+              { action: 'dismiss', title: 'Dismiss' },
+            ],
+          } as NotificationOptions);
 
           // Refresh transaction data
           queryClient.invalidateQueries({ queryKey: ['transactions', user.id] });
@@ -111,7 +115,11 @@ export function useTransactionNotifications() {
               body: `Your ${tx.type} of ${tx.amount} ${tx.currency} is now ${tx.status}`,
               tag: `tx-${tx.id}-status`,
               data: { url: `/dashboard/activity?tx=${tx.id}` },
-            });
+              actions: [
+                { action: 'view', title: 'View details' },
+                { action: 'dismiss', title: 'Dismiss' },
+              ],
+            } as NotificationOptions);
 
             // Refresh data
             queryClient.invalidateQueries({ queryKey: ['transactions', user.id] });
