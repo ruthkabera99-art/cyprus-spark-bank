@@ -1,4 +1,4 @@
-import { Bell, ArrowLeft, Wallet, RefreshCw, FileText } from 'lucide-react';
+import { Bell, ArrowLeft, Wallet, RefreshCw, FileText, Smartphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,8 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useToast } from '@/hooks/use-toast';
 
 interface PreferenceItemProps {
   icon: React.ReactNode;
@@ -54,6 +56,29 @@ function PreferenceSkeleton() {
 
 export default function NotificationPreferences() {
   const { preferences, isLoading, updatePreferences, isUpdating } = useNotificationPreferences();
+  const { permission, enabled: pushEnabled, isSupported, requestPermission, disable, showNotification } = usePushNotifications();
+  const { toast } = useToast();
+
+  const handlePushToggle = async (next: boolean) => {
+    if (next) {
+      if (permission === 'denied') {
+        toast({
+          title: 'Permission blocked',
+          description: 'Push notifications are blocked. Enable them in your browser/device settings.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      const granted = await requestPermission();
+      if (granted) {
+        showNotification('🔔 Push notifications enabled', {
+          body: "You'll now receive transaction alerts even when the app is closed.",
+        });
+      }
+    } else {
+      disable();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,6 +147,35 @@ export default function NotificationPreferences() {
                   isUpdating={isUpdating}
                 />
               </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Push Notifications</CardTitle>
+            <CardDescription>
+              Receive transaction alerts on your device, even when the app is closed. Works best when installed as a PWA on your home screen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!isSupported ? (
+              <p className="text-sm text-muted-foreground py-4">
+                Push notifications aren't supported on this browser.
+              </p>
+            ) : (
+              <PreferenceItem
+                icon={<Smartphone className="h-5 w-5" />}
+                title="Device Push Alerts"
+                description={
+                  permission === 'denied'
+                    ? 'Blocked — enable in browser/device settings'
+                    : 'Show OS-level notifications for transactions'
+                }
+                enabled={pushEnabled}
+                onToggle={handlePushToggle}
+                isUpdating={false}
+              />
             )}
           </CardContent>
         </Card>
