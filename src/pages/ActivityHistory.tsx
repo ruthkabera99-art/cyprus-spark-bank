@@ -33,10 +33,13 @@ import {
   Loader2,
   History,
   FileText,
-  Filter
+  Filter,
+  AlertCircle
 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 const ActivityHistory = () => {
@@ -45,17 +48,33 @@ const ActivityHistory = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const highlightedTxId = searchParams.get('tx');
   const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
+  const { toast } = useToast();
+  const [notFoundTxId, setNotFoundTxId] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'traditional' | 'crypto'>('all');
 
-  // Scroll to and clear highlight after a few seconds
+  // Scroll to highlighted row, or surface a "not found" message as fallback
   useEffect(() => {
     if (!highlightedTxId || !transactions) return;
     const exists = transactions.some((t) => t.id === highlightedTxId);
-    if (!exists) return;
+
+    if (!exists) {
+      setNotFoundTxId(highlightedTxId);
+      toast({
+        title: 'Transaction not found',
+        description: 'The transaction from your notification could not be located.',
+        variant: 'destructive',
+      });
+      const next = new URLSearchParams(searchParams);
+      next.delete('tx');
+      setSearchParams(next, { replace: true });
+      return;
+    }
+
+    setNotFoundTxId(null);
     const t = setTimeout(() => {
       highlightedRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
@@ -68,7 +87,7 @@ const ActivityHistory = () => {
       clearTimeout(t);
       clearTimeout(clear);
     };
-  }, [highlightedTxId, transactions, searchParams, setSearchParams]);
+  }, [highlightedTxId, transactions, searchParams, setSearchParams, toast]);
 
   if (!user) return null;
 
@@ -171,6 +190,18 @@ const ActivityHistory = () => {
               </CardContent>
             </Card>
           </div>
+
+          {notFoundTxId && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Transaction not found</AlertTitle>
+              <AlertDescription>
+                We couldn't find the transaction referenced by your notification
+                <span className="font-mono text-xs ml-1">({notFoundTxId.slice(0, 8)}…)</span>.
+                It may have been removed. Browse your full activity below.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Filters */}
           <Card className="mb-6">

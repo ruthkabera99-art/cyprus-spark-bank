@@ -25,10 +25,16 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
-// Handle notification clicks - focus existing tab or open dashboard
+// Handle notification clicks - focus existing tab or open the deep-linked URL
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || "/dashboard";
+
+  // If user tapped the "Dismiss" action, do nothing further
+  if (event.action === "dismiss") return;
+
+  const targetUrl =
+    (event.notification.data && event.notification.data.url) || "/dashboard";
+
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
