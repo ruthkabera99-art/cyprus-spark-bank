@@ -1,4 +1,4 @@
-import { Bell, ArrowLeft, Wallet, RefreshCw, FileText } from 'lucide-react';
+import { Bell, ArrowLeft, Wallet, RefreshCw, FileText, Smartphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,8 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useToast } from '@/hooks/use-toast';
 
 interface PreferenceItemProps {
   icon: React.ReactNode;
