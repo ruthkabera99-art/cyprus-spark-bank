@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,11 +42,33 @@ import { format } from "date-fns";
 const ActivityHistory = () => {
   const { user } = useAuth();
   const { data: transactions, isLoading } = useTransactions();
-  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const highlightedTxId = searchParams.get('tx');
+  const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'traditional' | 'crypto'>('all');
+
+  // Scroll to and clear highlight after a few seconds
+  useEffect(() => {
+    if (!highlightedTxId || !transactions) return;
+    const exists = transactions.some((t) => t.id === highlightedTxId);
+    if (!exists) return;
+    const t = setTimeout(() => {
+      highlightedRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    const clear = setTimeout(() => {
+      const next = new URLSearchParams(searchParams);
+      next.delete('tx');
+      setSearchParams(next, { replace: true });
+    }, 6000);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(clear);
+    };
+  }, [highlightedTxId, transactions, searchParams, setSearchParams]);
 
   if (!user) return null;
 
@@ -235,8 +258,14 @@ const ActivityHistory = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredTransactions.map((tx) => (
-                        <TableRow key={tx.id}>
+                      {filteredTransactions.map((tx) => {
+                        const isHighlighted = tx.id === highlightedTxId;
+                        return (
+                        <TableRow
+                          key={tx.id}
+                          ref={isHighlighted ? highlightedRowRef : undefined}
+                          className={isHighlighted ? 'bg-primary/10 ring-2 ring-primary/40 transition-colors' : undefined}
+                        >
                           <TableCell>
                             <div className="flex items-center gap-2">
                               {getTypeIcon(tx.type)}
@@ -266,7 +295,8 @@ const ActivityHistory = () => {
                             </span>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
