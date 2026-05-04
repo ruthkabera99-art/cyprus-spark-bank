@@ -191,6 +191,18 @@ const ActivityHistory = () => {
             </Card>
           </div>
 
+          {notFoundTxId && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Transaction not found</AlertTitle>
+              <AlertDescription>
+                We couldn't find the transaction referenced by your notification
+                <span className="font-mono text-xs ml-1">({notFoundTxId.slice(0, 8)}…)</span>.
+                It may have been removed. Browse your full activity below.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Filters */}
           <Card className="mb-6">
             <CardContent className="pt-6">
