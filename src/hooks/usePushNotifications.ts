@@ -42,11 +42,23 @@ export function usePushNotifications() {
       if (Notification.permission !== 'granted') return;
       if (!enabled) return;
 
+      // iOS Safari / iOS PWAs don't support notification `actions` and
+      // require notifications to be shown via the service worker registration.
+      const ua = navigator.userAgent || '';
+      const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+        (navigator.platform === 'MacIntel' && (navigator as any).maxTouchPoints > 1);
+
       const opts: NotificationOptions = {
         icon: '/icon-192.png',
         badge: '/icon-192.png',
         ...options,
       };
+
+      if (isIOS && 'actions' in opts) {
+        // Strip unsupported fields on iOS to avoid silent failures
+        delete (opts as any).actions;
+        delete (opts as any).requireInteraction;
+      }
 
       try {
         if ('serviceWorker' in navigator) {
@@ -56,7 +68,8 @@ export function usePushNotifications() {
             return;
           }
         }
-        new Notification(title, opts);
+        // Fallback for non-SW contexts (not iOS — iOS requires SW)
+        if (!isIOS) new Notification(title, opts);
       } catch {
         // Silent fail - some browsers (iOS Safari) only allow SW notifications
       }
