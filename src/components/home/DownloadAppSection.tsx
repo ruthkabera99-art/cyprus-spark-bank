@@ -1,8 +1,65 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Smartphone, Download, Shield, Zap, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export function DownloadAppSection() {
+  const navigate = useNavigate();
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    const installedHandler = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+      toast.success('MorganFinance app installed!');
+    };
+    window.addEventListener('appinstalled', installedHandler);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
+    };
+  }, []);
+
+  const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  const handleInstall = async (platform: 'android' | 'ios') => {
+    if (isInstalled) {
+      toast.info('App is already installed. Open it from your home screen.');
+      return;
+    }
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          toast.success('Installing MorganFinance...');
+        }
+        setDeferredPrompt(null);
+        return;
+      } catch {
+        // fall through to instructions page
+      }
+    }
+    // iOS Safari has no install prompt API — show step-by-step
+    if (platform === 'ios' || isIOS) {
+      navigate('/install');
+      return;
+    }
+    // Android without prompt yet — guide user
+    toast.info('Tap your browser menu, then "Install app" or "Add to Home screen".');
+    navigate('/install');
+  };
+
   return (
     <section className="py-20 bg-gradient-to-br from-foreground via-foreground to-primary/90 relative overflow-hidden">
       <div className="absolute inset-0">
@@ -45,22 +102,29 @@ export function DownloadAppSection() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg group" asChild>
-                <Link to="/install">
-                  <Download className="mr-2 w-5 h-5" />
-                  Download for Android
-                </Link>
+              <Button
+                size="lg"
+                className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg group"
+                onClick={() => handleInstall('android')}
+              >
+                <Download className="mr-2 w-5 h-5" />
+                {isInstalled ? 'App Installed' : deferredPrompt ? 'Install Now (Android)' : 'Download for Android'}
               </Button>
-              <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" asChild>
-                <Link to="/install">
-                  <Download className="mr-2 w-5 h-5" />
-                  Download for iPhone
-                </Link>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+                onClick={() => handleInstall('ios')}
+              >
+                <Download className="mr-2 w-5 h-5" />
+                Download for iPhone
               </Button>
             </div>
 
             <p className="text-xs text-primary-foreground/50">
-              No app store needed — install directly from your browser. Free to download.
+              {deferredPrompt
+                ? 'One-tap install — no app store, no extra steps.'
+                : 'No app store needed — install directly from your browser. Free to download.'}
             </p>
           </div>
 
