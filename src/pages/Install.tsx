@@ -3,33 +3,56 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Smartphone, Shield, CheckCircle, Share, PlusSquare, MoreVertical } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Download, Smartphone, Shield, CheckCircle, Share, PlusSquare,
+  MoreVertical, ExternalLink, AlertTriangle, Copy,
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+type AndroidBrowser = 'chrome' | 'samsung' | 'firefox' | 'edge' | 'inapp' | 'other';
+
+const detectAndroidBrowser = (ua: string): AndroidBrowser => {
+  if (/FBAN|FBAV|Instagram|Line\/|Twitter|TikTok|MicroMessenger/i.test(ua)) return 'inapp';
+  if (/SamsungBrowser/i.test(ua)) return 'samsung';
+  if (/EdgA|Edge/i.test(ua)) return 'edge';
+  if (/Firefox|FxiOS/i.test(ua)) return 'firefox';
+  if (/Chrome/i.test(ua)) return 'chrome';
+  return 'other';
+};
 
 const Install = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
+  const [androidBrowser, setAndroidBrowser] = useState<AndroidBrowser>('other');
 
   useEffect(() => {
-    // Detect platform
     const ua = navigator.userAgent;
+    const android = /Android/.test(ua);
     setIsIOS(/iPad|iPhone|iPod/.test(ua));
-    setIsAndroid(/Android/.test(ua));
+    setIsAndroid(android);
+    if (android) setAndroidBrowser(detectAndroidBrowser(ua));
 
-    // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
     }
 
-    // Listen for install prompt
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handler);
-
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    const installed = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+    };
+    window.addEventListener('appinstalled', installed);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installed);
+    };
   }, []);
 
   const handleInstall = async () => {
@@ -38,8 +61,24 @@ const Install = () => {
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       setIsInstalled(true);
+      toast.success('Installing MorganFinance…');
     }
     setDeferredPrompt(null);
+  };
+
+  const openInChrome = () => {
+    const host = window.location.host;
+    const path = window.location.pathname + window.location.search;
+    window.location.href = `intent://${host}${path}#Intent;scheme=https;package=com.android.chrome;end`;
+  };
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.origin);
+      toast.success('Link copied — paste it into Chrome to install.');
+    } catch {
+      toast.error('Could not copy link.');
+    }
   };
 
   return (
