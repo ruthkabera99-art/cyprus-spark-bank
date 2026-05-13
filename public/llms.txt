@@ -1,0 +1,21 @@
+# MorganFinance Bank
+
+> FDIC-insured digital banking offering personal accounts, business banking, collateral-backed loans (including crypto collateral), and secure online transactions.
+
+MorganFinance Bank is a digital-first US bank serving 2M+ customers since 1974. We provide checking and savings accounts, wire and international (SWIFT/BIC) transfers, deposits via bank, card and digital wallets, and loans secured by real estate, vehicles, equipment, or cryptocurrency. The platform features bank-grade 256-bit encryption, multi-factor authentication, real-time notifications, and 24/7 customer support with AI-assisted chat.
+
+## Pages
+
+- [Home](/): Overview of services, security, and how MorganFinance works.
+- [Personal Banking](/personal): Checking, savings, and everyday banking for individuals.
+- [Business Banking](/business): Accounts, payments, and treasury tools for businesses.
+- [Loans](/loans): Collateral-backed loans with crypto and fiat collateral options.
+- [About](/about): Company history, mission, and leadership.
+- [Install App](/install): Install the MorganFinance progressive web app on iOS and Android.
+
+## Optional
+
+- [Privacy Policy](/privacy): How we collect, use, and protect your data.
+- [Terms of Service](/terms): User agreement and service terms.
+- [Sign In](/login): Existing customer login.
+- [Open an Account](/register): New customer registration.
