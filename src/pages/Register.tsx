@@ -67,6 +67,11 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex">
+      <SEO
+        title="Open an Account | MorganFinance Bank"
+        description="Open a free FDIC-insured personal or business account with MorganFinance Bank in under 10 minutes."
+        path="/register"
+      />
       {/* Left Side - Decorative */}
       <div className="hidden lg:flex flex-1 gradient-primary items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
