@@ -61,6 +61,11 @@ const team = [
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="About MorganFinance Bank — Our Story & Mission"
+        description="Founded in 1974, MorganFinance Bank serves 2M+ customers with trusted, customer-centric digital banking and financial services."
+        path="/about"
+      />
       <Header />
       <main>
         {/* Hero */}
