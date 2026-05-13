@@ -62,6 +62,11 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex">
+      <SEO
+        title="Sign In | MorganFinance Bank"
+        description="Securely sign in to your MorganFinance Bank account to manage personal and business finances."
+        path="/login"
+      />
       {/* Left Side - Form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
