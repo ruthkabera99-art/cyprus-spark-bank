@@ -45,10 +45,6 @@ const Index = () => {
         path="/"
         jsonLd={faqJsonLd}
       />
-
-const Index = () => {
-  return (
-    <div className="min-h-screen bg-background">
       <TopBar />
       <Header />
       <main>
