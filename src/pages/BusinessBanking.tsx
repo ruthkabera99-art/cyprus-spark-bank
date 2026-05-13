@@ -1,3 +1,4 @@
+import { SEO } from '@/components/SEO';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,11 @@ const solutions = [
 const BusinessBanking = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Business Banking — Accounts, Loans & Merchant Services | MorganFinance"
+        description="Business checking, financing, and merchant services with API integration, free wires, and next-day deposits."
+        path="/business"
+      />
       <Header />
       <main>
         {/* Hero */}

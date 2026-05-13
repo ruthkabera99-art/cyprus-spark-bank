@@ -1,3 +1,4 @@
+import { SEO } from '@/components/SEO';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,11 @@ const accounts = [
 const PersonalBanking = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Personal Banking — Checking, Savings & Cards | MorganFinance"
+        description="Personal checking & savings with no monthly fees, 2.5% APY, free debit cards, and premium credit cards. FDIC-insured."
+        path="/personal"
+      />
       <Header />
       <main>
         {/* Hero */}

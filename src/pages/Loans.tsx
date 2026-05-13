@@ -1,3 +1,4 @@
+import { SEO } from '@/components/SEO';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,19 @@ const collateralTypes = [
 const Loans = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Loans — Collateral, Mortgage, Auto & Business | MorganFinance"
+        description="Collateral-backed loans from 4.5% APR using crypto, real estate, vehicles, or equipment. Mortgage, auto, and business financing."
+        path="/loans"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'FinancialProduct',
+          name: 'Collateral-Backed Loans',
+          provider: { '@type': 'FinancialService', name: 'MorganFinance Bank', url: 'https://morganfinance.us' },
+          interestRate: 'From 4.5% APR',
+          description: 'Loans secured by real estate, vehicles, equipment, or cryptocurrency collateral.',
+        }}
+      />
       <Header />
       <main>
         {/* Hero */}

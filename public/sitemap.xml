@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://morganfinance.us/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://morganfinance.us/personal</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://morganfinance.us/business</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://morganfinance.us/loans</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://morganfinance.us/about</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://morganfinance.us/install</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://morganfinance.us/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://morganfinance.us/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://morganfinance.us/login</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://morganfinance.us/register</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
+</urlset>

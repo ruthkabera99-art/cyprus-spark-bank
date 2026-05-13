@@ -1,9 +1,15 @@
+import { SEO } from '@/components/SEO';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 
 const TermsOfService = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Terms of Service | MorganFinance Bank"
+        description="Terms governing the use of MorganFinance Bank's website, mobile apps, and banking services."
+        path="/terms"
+      />
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-4 max-w-3xl">

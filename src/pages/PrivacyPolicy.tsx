@@ -1,9 +1,15 @@
+import { SEO } from '@/components/SEO';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 
 const PrivacyPolicy = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Privacy Policy | MorganFinance Bank"
+        description="How MorganFinance Bank collects, uses, and protects your personal and financial information."
+        path="/privacy"
+      />
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-4 max-w-3xl">
