@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Download, Shield, Zap, Bell } from 'lucide-react';
+import { Smartphone, Download, Shield, Zap, Bell, Apple } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { QRCodeSVG } from 'qrcode.react';
 
 export function DownloadAppSection() {
   const navigate = useNavigate();
@@ -126,6 +127,27 @@ export function DownloadAppSection() {
                 ? 'One-tap install — no app store, no extra steps.'
                 : 'No app store needed — install directly from your browser. Free to download.'}
             </p>
+
+            {/* QR code for iOS / desktop users */}
+            <div className="mt-6 flex items-center gap-4 p-4 rounded-2xl bg-primary-foreground/5 border border-primary-foreground/10 max-w-md">
+              <div className="bg-white p-2 rounded-lg flex-shrink-0">
+                <QRCodeSVG
+                  value={typeof window !== 'undefined' ? `${window.location.origin}/install` : 'https://cyprus-spark-bank.lovable.app/install'}
+                  size={96}
+                  level="M"
+                  includeMargin={false}
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-primary-foreground font-semibold text-sm">
+                  <Apple className="w-4 h-4 text-accent" />
+                  Scan with iPhone
+                </div>
+                <p className="text-xs text-primary-foreground/60 leading-relaxed">
+                  Open your camera, scan this QR, then tap Share → <span className="text-accent font-medium">Add to Home Screen</span>.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Phone Mockup */}
