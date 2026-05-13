@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Download, Shield, Zap, Bell } from 'lucide-react';
+import { Smartphone, Download, Shield, Zap, Bell, Apple } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { QRCodeSVG } from 'qrcode.react';
 
 export function DownloadAppSection() {
   const navigate = useNavigate();
