@@ -84,6 +84,11 @@ const Install = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Install the MorganFinance App"
+        description="One-tap install of the MorganFinance progressive web app on iOS, Android, and desktop. No app store required."
+        path="/install"
+      />
       <Header />
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto">
