@@ -128,6 +128,7 @@ export function SeoVerification() {
 
   return (
     <div className="space-y-6">
+      <SeoScanPanel />
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
