@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Circle, ExternalLink, Copy, Search, Globe } from "lucide-react";
 import { toast } from "sonner";
+import { SeoScanPanel } from "./SeoScanPanel";
 
 const SITE_URL = "https://morganfinance.us/";
 const SITEMAP_URL = "https://morganfinance.us/sitemap.xml";
@@ -127,6 +128,7 @@ export function SeoVerification() {
 
   return (
     <div className="space-y-6">
+      <SeoScanPanel />
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
