@@ -1,4 +1,8 @@
-import { Star, Quote } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
+import { Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const testimonials = [
   {
@@ -8,7 +12,7 @@ const testimonials = [
     text: 'MorganFinance has been instrumental in growing my business. Their collateral loan process was transparent, and I always knew exactly where I stood. The team genuinely cares about their clients.',
     rating: 5,
     years: 'Customer since 2018',
-    accent: 'from-primary/20 to-primary/5',
+    avatar: 'https://i.pravatar.cc/160?img=47',
   },
   {
     name: 'David Chen',
@@ -17,7 +21,7 @@ const testimonials = [
     text: 'I switched to MorganFinance for the security features and stayed for the service. The 24/7 support team resolved my issue within minutes. My deposits are FDIC insured, which gives me real peace of mind.',
     rating: 5,
     years: 'Customer since 2020',
-    accent: 'from-gold/20 to-gold/5',
+    avatar: 'https://i.pravatar.cc/160?img=12',
   },
   {
     name: 'Maria Rodriguez',
@@ -26,16 +30,16 @@ const testimonials = [
     text: 'As a freelancer, I need a bank that makes transfers fast and fees fair. MorganFinance delivers on both. Their mobile experience is the best I\'ve used, and I appreciate the clear fee disclosures.',
     rating: 5,
     years: 'Customer since 2021',
-    accent: 'from-primary/20 to-primary/5',
+    avatar: 'https://i.pravatar.cc/160?img=45',
   },
   {
-    name: 'James O\'Connor',
+    name: "James O'Connor",
     role: 'Real Estate Investor',
     location: 'Chicago, IL',
-    text: 'I\'ve financed three property deals through MorganFinance. Their collateral-backed loans are competitively priced and funded faster than any traditional lender I\'ve worked with. Truly a partner in growth.',
+    text: "I've financed three property deals through MorganFinance. Their collateral-backed loans are competitively priced and funded faster than any traditional lender I've worked with. Truly a partner in growth.",
     rating: 5,
     years: 'Customer since 2019',
-    accent: 'from-gold/20 to-gold/5',
+    avatar: 'https://i.pravatar.cc/160?img=33',
   },
   {
     name: 'Priya Patel',
@@ -44,7 +48,7 @@ const testimonials = [
     text: 'The wealth management tools and crypto custody at MorganFinance are unmatched. I can see my entire net worth in one dashboard, and the advisors actually listen before recommending anything.',
     rating: 5,
     years: 'Customer since 2022',
-    accent: 'from-primary/20 to-primary/5',
+    avatar: 'https://i.pravatar.cc/160?img=44',
   },
   {
     name: 'Michael Thompson',
@@ -53,21 +57,38 @@ const testimonials = [
     text: 'Opening a business account took less than 15 minutes online. International wires settle quickly, and the API integrations saved my finance team hours every week. Highly recommend MorganFinance.',
     rating: 5,
     years: 'Customer since 2023',
-    accent: 'from-gold/20 to-gold/5',
+    avatar: 'https://i.pravatar.cc/160?img=15',
   },
 ];
 
 export function TestimonialsSection() {
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: true, align: 'start', dragFree: false },
+    [Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true })]
+  );
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    setScrollSnaps(emblaApi.scrollSnapList());
+    const onSelect = () => setSelectedIndex(emblaApi.selectedScrollSnap());
+    emblaApi.on('select', onSelect);
+    onSelect();
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
+  }, [emblaApi]);
+
   return (
     <section className="relative py-24 overflow-hidden bg-gradient-to-b from-background via-muted/30 to-background">
-      {/* Decorative background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-gold/5 rounded-full blur-3xl" />
       </div>
 
       <div className="container relative mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6">
             <Star className="w-3.5 h-3.5 fill-gold text-gold" />
             <span className="text-xs font-semibold text-primary uppercase tracking-wider">
@@ -85,46 +106,88 @@ export function TestimonialsSection() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {testimonials.map((testimonial, index) => (
-            <article
-              key={testimonial.name}
-              className="group relative bg-card rounded-2xl p-8 border border-border hover:border-primary/40 hover:shadow-elegant hover:-translate-y-1 transition-all duration-500 animate-fade-in overflow-hidden"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              {/* Hover accent */}
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${testimonial.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
+        {/* Carousel */}
+        <div className="relative max-w-6xl mx-auto">
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex -ml-4 touch-pan-y">
+              {testimonials.map((t, index) => (
+                <div
+                  key={t.name}
+                  className="pl-4 min-w-0 shrink-0 grow-0 basis-full sm:basis-1/2 lg:basis-1/3"
+                >
+                  <article className="group relative h-full bg-card rounded-2xl p-8 border border-border hover:border-primary/40 hover:shadow-elegant transition-all duration-500 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-gold/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                    <Quote className="w-10 h-10 text-primary/15 absolute top-6 right-6 group-hover:text-primary/30 group-hover:scale-110 transition-all duration-500" />
+
+                    <div className="relative flex flex-col h-full">
+                      <div className="flex gap-1 mb-4">
+                        {Array.from({ length: t.rating }).map((_, i) => (
+                          <Star key={i} className="w-4 h-4 fill-gold text-gold" />
+                        ))}
+                      </div>
+
+                      <p className="text-foreground/90 leading-relaxed mb-6 text-[15px] flex-1">
+                        "{t.text}"
+                      </p>
+
+                      <div className="border-t border-border pt-5 flex items-center gap-3">
+                        <Avatar className="w-12 h-12 ring-2 ring-background shadow-md">
+                          <AvatarImage
+                            src={t.avatar}
+                            alt={`${t.name} profile photo`}
+                            loading="lazy"
+                          />
+                          <AvatarFallback className="gradient-primary text-primary-foreground font-semibold text-sm">
+                            {t.name.split(' ').map((n) => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground text-sm truncate">{t.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {t.role} · {t.location}
+                          </p>
+                          <p className="text-[11px] text-primary/70 mt-0.5 font-medium">{t.years}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Controls */}
+          <button
+            type="button"
+            onClick={() => emblaApi?.scrollPrev()}
+            aria-label="Previous testimonial"
+            className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center rounded-full bg-card border border-border shadow-md hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => emblaApi?.scrollNext()}
+            aria-label="Next testimonial"
+            className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center rounded-full bg-card border border-border shadow-md hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          {/* Dots */}
+          <div className="flex justify-center gap-2 mt-8">
+            {scrollSnaps.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => emblaApi?.scrollTo(i)}
+                aria-label={`Go to testimonial ${i + 1}`}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === selectedIndex ? 'w-8 bg-primary' : 'w-2 bg-border hover:bg-primary/40'
+                }`}
               />
-
-              <Quote className="w-10 h-10 text-primary/15 absolute top-6 right-6 group-hover:text-primary/30 group-hover:scale-110 transition-all duration-500" />
-
-              <div className="relative">
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-gold text-gold" />
-                  ))}
-                </div>
-
-                <p className="text-foreground/90 leading-relaxed mb-6 text-[15px]">
-                  "{testimonial.text}"
-                </p>
-
-                <div className="border-t border-border pt-5 flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-semibold text-sm shadow-md ring-2 ring-background">
-                    {testimonial.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground text-sm truncate">{testimonial.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {testimonial.role} · {testimonial.location}
-                    </p>
-                    <p className="text-[11px] text-primary/70 mt-0.5 font-medium">{testimonial.years}</p>
-                  </div>
-                </div>
-              </div>
-            </article>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Trust footer */}
