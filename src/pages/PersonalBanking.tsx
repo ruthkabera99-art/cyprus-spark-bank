@@ -120,7 +120,7 @@ const PersonalBanking = () => {
               </div>
               <div className="bg-card rounded-3xl p-8 shadow-elegant border border-border">
                 <div className="aspect-video bg-muted rounded-xl flex items-center justify-center">
-                  <Smartphone className="w-24 h-24 text-muted-foreground/30" />
+                  <Smartphone className="w-24 h-24 text-muted-foreground" aria-hidden="true" />
                 </div>
               </div>
             </div>
