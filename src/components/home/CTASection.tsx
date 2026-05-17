@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export function CTASection() {
+  const { data: settings } = useSiteSettings();
+  const phone = settings?.contact_phone ?? '+1 (800) 123-4567';
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
@@ -28,9 +31,11 @@ export function CTASection() {
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                <Phone className="mr-2 w-5 h-5" />
-                Call Us: (800) 123-4567
+              <Button size="lg" variant="outline" className="bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" asChild>
+                <a href={`tel:${phone.replace(/[^+\d]/g, '')}`}>
+                  <Phone className="mr-2 w-5 h-5" />
+                  Call Us: {phone}
+                </a>
               </Button>
             </div>
           </div>

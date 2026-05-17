@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Users, CreditCard, Wallet, History, Receipt, MessageCircle, Search } from "lucide-react";
+import { FileText, Users, CreditCard, Wallet, History, Receipt, MessageCircle, Search, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,7 @@ interface AdminTabsProps {
 export function AdminTabs({ activeTab, onTabChange, unreadChatCount = 0 }: AdminTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-8">
+      <TabsList className="grid w-full grid-cols-9">
         <TabsTrigger value="loans" className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
           <span className="hidden sm:inline">Loans</span>
@@ -58,6 +58,10 @@ export function AdminTabs({ activeTab, onTabChange, unreadChatCount = 0 }: Admin
         <TabsTrigger value="seo" className="flex items-center gap-2">
           <Search className="h-4 w-4" />
           <span className="hidden sm:inline">SEO</span>
+        </TabsTrigger>
+        <TabsTrigger value="settings" className="flex items-center gap-2">
+          <Settings className="h-4 w-4" />
+          <span className="hidden sm:inline">Settings</span>
         </TabsTrigger>
       </TabsList>
     </Tabs>

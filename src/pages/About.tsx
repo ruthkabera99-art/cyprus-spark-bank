@@ -4,6 +4,7 @@ import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Shield, Award, Users, Globe, ArrowRight, Target, Eye, Heart, Mail, Phone, MapPin, Linkedin } from 'lucide-react';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 const values = [
   {
@@ -60,6 +61,11 @@ const team = [
 ];
 
 const About = () => {
+  const { data: settings } = useSiteSettings();
+  const phone = settings?.contact_phone ?? '+1 (800) 123-4567';
+  const email = settings?.contact_email ?? 'support@morganfinancebank.com';
+  const address = settings?.contact_address ?? '123 Financial District';
+  const hours = settings?.contact_hours ?? 'Mon–Fri, 9 AM – 5 PM';
   return (
     <div className="min-h-screen bg-background">
       <SEO
@@ -241,20 +247,20 @@ const About = () => {
               <div className="bg-card rounded-xl p-6 border border-border text-center">
                 <Phone className="w-6 h-6 text-primary mx-auto mb-3" />
                 <h3 className="font-semibold text-foreground text-sm mb-1">Phone</h3>
-                <p className="text-sm text-muted-foreground">+1 (800) 123-4567</p>
+                <p className="text-sm text-muted-foreground">{phone}</p>
                 <p className="text-xs text-muted-foreground mt-1">Available 24/7</p>
               </div>
               <div className="bg-card rounded-xl p-6 border border-border text-center">
                 <Mail className="w-6 h-6 text-primary mx-auto mb-3" />
                 <h3 className="font-semibold text-foreground text-sm mb-1">Email</h3>
-                <p className="text-sm text-muted-foreground">support@securebank.com</p>
+                <p className="text-sm text-muted-foreground break-all">{email}</p>
                 <p className="text-xs text-muted-foreground mt-1">Response within 24 hours</p>
               </div>
               <div className="bg-card rounded-xl p-6 border border-border text-center">
                 <MapPin className="w-6 h-6 text-primary mx-auto mb-3" />
                 <h3 className="font-semibold text-foreground text-sm mb-1">Office</h3>
-                <p className="text-sm text-muted-foreground">123 Financial District</p>
-                <p className="text-xs text-muted-foreground mt-1">Mon–Fri, 9 AM – 5 PM</p>
+                <p className="text-sm text-muted-foreground">{address}</p>
+                <p className="text-xs text-muted-foreground mt-1">{hours}</p>
               </div>
             </div>
           </div>
