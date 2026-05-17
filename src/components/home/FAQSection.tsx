@@ -4,8 +4,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
-const faqs = [
+const buildFaqs = (s: { phone: string; email: string; address: string; hours: string }) => [
   {
     question: 'Is my money safe with MorganFinance Bank?',
     answer: 'Yes. All deposits are FDIC insured up to $250,000 per depositor, per ownership category. We use 256-bit SSL encryption, multi-factor authentication, and undergo regular SOC 2 Type II security audits. Your funds are protected by the same standards used by the largest financial institutions.',
@@ -36,11 +37,18 @@ const faqs = [
   },
   {
     question: 'How can I contact support?',
-    answer: 'You can reach us via phone at +1 (800) 123-4567 (24/7), email at support@securebank.com, or through the live chat on our website. Our branch at 123 Financial District, Banking Tower, City Center is open Monday–Friday, 9 AM – 5 PM.',
+    answer: `You can reach us via phone at ${s.phone} (24/7), email at ${s.email}, or through the live chat on our website. Our branch at ${s.address} is open ${s.hours}.`,
   },
 ];
 
 export function FAQSection() {
+  const { data: settings } = useSiteSettings();
+  const faqs = buildFaqs({
+    phone: settings?.contact_phone ?? '+1 (800) 123-4567',
+    email: settings?.contact_email ?? 'support@morganfinancebank.com',
+    address: settings?.contact_address ?? '123 Financial District, Banking Tower, City Center',
+    hours: settings?.contact_hours ?? 'Mon–Fri, 9 AM – 5 PM',
+  });
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">

@@ -1,7 +1,13 @@
 import { Link } from 'react-router-dom';
 import { Shield, Phone, Mail, MapPin, Facebook, Twitter, Linkedin, Instagram, Lock, BadgeCheck } from 'lucide-react';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export function Footer() {
+  const { data: settings } = useSiteSettings();
+  const phone = settings?.contact_phone ?? '+1 (800) 123-4567';
+  const email = settings?.contact_email ?? 'support@morganfinancebank.com';
+  const address = settings?.contact_address ?? '123 Financial District, Banking Tower, City Center';
+  const nmls = settings?.nmls_number ?? '123456';
   return (
     <footer className="bg-foreground text-background">
       <div className="container mx-auto px-4 py-16">
@@ -71,7 +77,7 @@ export function Footer() {
               ))}
               <li className="text-sm opacity-80">FDIC Member Institution</li>
               <li className="text-sm opacity-80">Equal Housing Lender</li>
-              <li className="text-sm opacity-80">NMLS# 123456</li>
+              <li className="text-sm opacity-80">NMLS# {nmls}</li>
             </ul>
           </div>
 
@@ -81,15 +87,15 @@ export function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 mt-0.5 text-primary" />
-                <span className="text-sm opacity-80">123 Financial District, Banking Tower, City Center</span>
+                <span className="text-sm opacity-80">{address}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-primary" />
-                <span className="text-sm opacity-80">+1 (800) 123-4567</span>
+                <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="text-sm opacity-80 hover:opacity-100">{phone}</a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-primary" />
-                <span className="text-sm opacity-80">support@morganfinancebank.com</span>
+                <a href={`mailto:${email}`} className="text-sm opacity-80 hover:opacity-100">{email}</a>
               </li>
             </ul>
 
