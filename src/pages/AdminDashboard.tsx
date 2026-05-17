@@ -26,6 +26,7 @@ import { TransactionsManagement } from '@/components/admin/TransactionsManagemen
 import { CryptoManagement } from '@/components/admin/CryptoManagement';
 import { ActivityLogTab } from '@/components/admin/ActivityLogTab';
 import { SeoVerification } from '@/components/admin/SeoVerification';
+import { SiteSettingsPanel } from '@/components/admin/SiteSettingsPanel';
 import { LoanPaymentsManagement } from '@/components/admin/LoanPaymentsManagement';
 import { ChatManagement } from '@/components/admin/ChatManagement';
 import { LoanStatusBadge } from '@/components/admin/LoanStatusBadge';
@@ -493,6 +494,7 @@ export default function AdminDashboard() {
         {activeTab === 'chat' && <ChatManagement />}
         {activeTab === 'activity' && <ActivityLogTab />}
         {activeTab === 'seo' && <SeoVerification />}
+        {activeTab === 'settings' && <SiteSettingsPanel />}
       </main>
       <Footer />
 
