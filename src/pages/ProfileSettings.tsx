@@ -108,15 +108,6 @@ const ProfileSettings = () => {
     );
   }
 
-  const initials = profile?.full_name
-    ? profile.full_name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    : user.email?.charAt(0).toUpperCase() || 'U';
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Header */}
@@ -144,12 +135,15 @@ const ProfileSettings = () => {
           <div className="gradient-primary p-8">
             <div className="flex flex-col items-center gap-4">
               <div className="relative group">
-                <Avatar className="w-28 h-28 border-4 border-primary-foreground/30 shadow-xl">
-                  <AvatarImage src={profile?.avatar_url || undefined} alt="Profile photo" />
-                  <AvatarFallback className="text-3xl font-bold bg-primary-foreground/20 text-primary-foreground">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  src={profile?.avatar_url}
+                  name={profile?.full_name}
+                  email={user.email}
+                  alt="Profile photo"
+                  size="xl"
+                  className="border-4 border-primary-foreground/30 shadow-xl"
+                  fallbackClassName="text-3xl font-bold"
+                />
                 <button
                   onClick={handleAvatarClick}
                   disabled={uploadAvatar.isPending}
