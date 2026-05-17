@@ -1,17 +1,23 @@
 import { Phone, Mail, Lock, Shield } from 'lucide-react';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export function TopBar() {
+  const { data: settings } = useSiteSettings();
+  const phone = settings?.contact_phone ?? '+1 (800) 123-4567';
+  const email = settings?.contact_email ?? 'support@morganfinancebank.com';
+  const telHref = `tel:${phone.replace(/[^+\d]/g, '')}`;
+
   return (
     <div className="bg-foreground text-background py-2 text-xs">
       <div className="container mx-auto px-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-4">
-          <a href="tel:+18001234567" className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
+          <a href={telHref} className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
             <Phone className="w-3 h-3" />
-            <span>+1 (800) 123-4567</span>
+            <span>{phone}</span>
           </a>
-          <a href="mailto:support@morganfinancebank.com" className="hidden sm:flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
+          <a href={`mailto:${email}`} className="hidden sm:flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
             <Mail className="w-3 h-3" />
-            <span>support@morganfinancebank.com</span>
+            <span>{email}</span>
           </a>
         </div>
         <div className="flex items-center gap-4">
