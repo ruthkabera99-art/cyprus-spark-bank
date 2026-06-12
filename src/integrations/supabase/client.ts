@@ -5,13 +5,30 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// Ensure every browser has a stable visitor id used by chat RLS policies
+// to scope anonymous conversations to the originating browser.
+function getOrCreateVisitorId(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    const existing = localStorage.getItem('chat_visitor_id');
+    if (existing) return existing;
+    const fresh = `visitor_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    localStorage.setItem('chat_visitor_id', fresh);
+    return fresh;
+  } catch {
+    return '';
+  }
+}
+
+const VISITOR_ID = getOrCreateVisitorId();
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+  },
+  global: {
+    headers: VISITOR_ID ? { 'x-visitor-id': VISITOR_ID } : {},
+  },
 });

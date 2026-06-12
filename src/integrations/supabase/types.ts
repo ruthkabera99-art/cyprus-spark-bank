@@ -457,6 +457,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_visitor_id: { Args: never; Returns: string }
       generate_account_number: { Args: never; Returns: string }
       has_role: {
         Args: {
