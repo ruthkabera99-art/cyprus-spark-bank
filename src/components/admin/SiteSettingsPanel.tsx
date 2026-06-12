@@ -178,12 +178,12 @@ export function SiteSettingsPanel() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             {DAYS.map((d) => {
-              const key = `hours_${d.key}` as keyof SiteSettings;
+              const key = `hours_${d.key}` as keyof SiteSettings & string;
               return (
                 <div key={d.key} className="grid gap-1.5">
-                  <Label htmlFor={key} className="text-sm">{d.label}</Label>
+                  <Label htmlFor={String(key)} className="text-sm">{d.label}</Label>
                   <Input
-                    id={key}
+                    id={String(key)}
                     value={form[key]}
                     onChange={(e) => set(key, e.target.value)}
                     placeholder="9:00 AM – 5:00 PM"
