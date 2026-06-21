@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, TrendingUp, Lock, CheckCircle, Phone } from 'lucide-react';
+import { ArrowRight, Shield, CheckCircle, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import heroCustomerService from '@/assets/hero-customer-service.jpg';
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-foreground via-foreground to-primary/90 py-20 lg:py-28">
+    <section className="relative overflow-hidden bg-foreground py-20 lg:py-28 min-h-[680px] flex items-center">
       {/* Customer service photographic background */}
       <div className="absolute inset-0">
         <img
@@ -13,13 +13,11 @@ export function HeroSection() {
           alt="MorganFinance banker shaking hands with a customer"
           width={1920}
           height={1080}
-          className="absolute inset-0 w-full h-full object-cover object-center animate-[heroZoom_20s_ease-in-out_infinite_alternate]"
+          className="absolute inset-0 w-full h-full object-cover object-[58%_center] md:object-center animate-[heroZoom_20s_ease-in-out_infinite_alternate]"
         />
-        {/* Readability scrim — strong on the left where copy sits, transparent on the right so the photo stays fully visible */}
-        <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/55 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 via-transparent to-transparent" />
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[140px]" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/15 rounded-full blur-[100px]" />
+        {/* Readability scrim kept only where the copy sits, leaving the service photo fully visible */}
+        <div className="absolute inset-y-0 left-0 w-full md:w-[58%] bg-gradient-to-r from-foreground/95 via-foreground/72 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-foreground/45 via-transparent to-transparent" />
         {/* Grid pattern overlay */}
         <div
           className="absolute inset-0 opacity-[0.03]"
@@ -31,7 +29,7 @@ export function HeroSection() {
       </div>
 
       <div className="container mx-auto px-4 relative">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-[minmax(0,0.86fr)_minmax(420px,1.14fr)] gap-12 items-center">
           {/* Content */}
           <div className="space-y-8 animate-fade-in">
             {/* Trust chip */}
@@ -85,73 +83,7 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Hero Card */}
-          <div className="relative animate-scale-in" style={{ animationDelay: '0.2s' }}>
-            <div className="relative z-10">
-              {/* Main Card */}
-              <div className="bg-card rounded-3xl shadow-elegant p-8 border border-border">
-                <div className="flex justify-between items-start mb-8">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Balance</p>
-                    <h2 className="text-4xl font-bold text-foreground mt-1">$124,850.00</h2>
-                  </div>
-                  <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center">
-                    <Shield className="w-7 h-7 text-primary-foreground" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="p-4 rounded-xl bg-success/10">
-                    <p className="text-xs text-muted-foreground mb-1">Income</p>
-                    <p className="text-lg font-semibold text-success">+$12,450</p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-destructive/10">
-                    <p className="text-xs text-muted-foreground mb-1">Expenses</p>
-                    <p className="text-lg font-semibold text-destructive">-$3,280</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    { name: 'Wire Transfer', amount: '-$2,500.00', time: '2 hours ago' },
-                    { name: 'Salary Deposit', amount: '+$8,500.00', time: 'Yesterday' },
-                    { name: 'Loan Payment', amount: '-$780.00', time: '2 days ago' },
-                  ].map((tx, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                      <div>
-                        <p className="font-medium text-sm">{tx.name}</p>
-                        <p className="text-xs text-muted-foreground">{tx.time}</p>
-                      </div>
-                      <p className={`font-semibold ${tx.amount.startsWith('+') ? 'text-success' : 'text-foreground'}`}>
-                        {tx.amount}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Floating Card */}
-              <div className="absolute -bottom-6 -left-6 bg-card rounded-2xl shadow-elegant p-4 border border-border animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl gradient-gold flex items-center justify-center shadow-gold">
-                    <TrendingUp className="w-6 h-6 text-gold-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Savings Growth</p>
-                    <p className="font-bold text-foreground">+18.5% <span className="text-success text-xs">↑</span></p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Security floating badge */}
-              <div className="absolute -top-4 -right-4 bg-card rounded-2xl shadow-elegant p-3 border border-border animate-fade-in" style={{ animationDelay: '0.6s' }}>
-                <div className="flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-success" />
-                  <span className="text-xs font-semibold text-foreground">256-bit Secured</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div className="hidden lg:block min-h-[520px]" aria-hidden="true" />
         </div>
       </div>
     </section>
