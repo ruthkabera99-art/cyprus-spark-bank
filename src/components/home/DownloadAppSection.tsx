@@ -143,7 +143,7 @@ export function DownloadAppSection() {
                   <Apple className="w-4 h-4 text-accent" />
                   Scan with iPhone
                 </div>
-                <p className="text-xs text-primary-foreground/60 leading-relaxed">
+                <p className="text-xs text-primary-foreground/90 leading-relaxed">
                   Open your camera, scan this QR, then tap Share → <span className="text-accent font-medium">Add to Home Screen</span>.
                 </p>
               </div>
