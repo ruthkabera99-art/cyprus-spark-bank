@@ -68,7 +68,7 @@ export function HeroSection() {
             </div>
 
             {/* Contact line */}
-            <div className="flex items-center gap-2 text-primary-foreground/60 text-sm pt-2">
+            <div className="flex items-center gap-2 text-primary-foreground/90 text-sm pt-2">
               <Phone className="w-4 h-4" />
               <span>Questions? Call us: <a href="tel:+18001234567" className="underline hover:text-primary-foreground transition-colors">+1 (800) 123-4567</a></span>
             </div>
