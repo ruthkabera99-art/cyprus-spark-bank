@@ -1,12 +1,23 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Shield, TrendingUp, Lock, CheckCircle, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import heroCustomerService from '@/assets/hero-customer-service.jpg';
 
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-foreground via-foreground to-primary/90 py-20 lg:py-28">
-      {/* Subtle geometric background */}
+      {/* Customer service photographic background */}
       <div className="absolute inset-0">
+        <img
+          src={heroCustomerService}
+          alt="MorganFinance banker shaking hands with a customer"
+          width={1920}
+          height={1080}
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-40 md:opacity-50 animate-[heroZoom_20s_ease-in-out_infinite_alternate]"
+        />
+        {/* Readability scrims */}
+        <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/85 to-foreground/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent" />
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px]" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/15 rounded-full blur-[100px]" />
         {/* Grid pattern overlay */}
