@@ -82,7 +82,7 @@ export function DownloadAppSection() {
               <span className="text-accent">Our Mobile App</span>
             </h2>
 
-            <p className="text-lg text-primary-foreground/70 max-w-lg">
+            <p className="text-lg text-primary-foreground/90 max-w-lg">
               Download the MorganFinance app and manage your finances anytime, anywhere. Available for both Android and iPhone — install directly from your browser.
             </p>
 
