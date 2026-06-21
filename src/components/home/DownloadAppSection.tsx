@@ -122,7 +122,7 @@ export function DownloadAppSection() {
               </Button>
             </div>
 
-            <p className="text-xs text-primary-foreground/50">
+            <p className="text-xs text-primary-foreground/80">
               {deferredPrompt
                 ? 'One-tap install — no app store, no extra steps.'
                 : 'No app store needed — install directly from your browser. Free to download.'}
