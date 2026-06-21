@@ -82,7 +82,7 @@ export function DownloadAppSection() {
               <span className="text-accent">Our Mobile App</span>
             </h2>
 
-            <p className="text-lg text-primary-foreground/70 max-w-lg">
+            <p className="text-lg text-primary-foreground/90 max-w-lg">
               Download the MorganFinance app and manage your finances anytime, anywhere. Available for both Android and iPhone — install directly from your browser.
             </p>
 
@@ -122,7 +122,7 @@ export function DownloadAppSection() {
               </Button>
             </div>
 
-            <p className="text-xs text-primary-foreground/50">
+            <p className="text-xs text-primary-foreground/80">
               {deferredPrompt
                 ? 'One-tap install — no app store, no extra steps.'
                 : 'No app store needed — install directly from your browser. Free to download.'}
@@ -143,7 +143,7 @@ export function DownloadAppSection() {
                   <Apple className="w-4 h-4 text-accent" />
                   Scan with iPhone
                 </div>
-                <p className="text-xs text-primary-foreground/60 leading-relaxed">
+                <p className="text-xs text-primary-foreground/90 leading-relaxed">
                   Open your camera, scan this QR, then tap Share → <span className="text-accent font-medium">Add to Home Screen</span>.
                 </p>
               </div>
