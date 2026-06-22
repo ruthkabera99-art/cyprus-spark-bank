@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Expose-Headers": "content-type",
 };
 
 serve(async (req) => {
@@ -25,7 +26,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get recent conversation history for context (small window = faster)
+    // Small history window for low latency
     const { data: history } = await supabase
       .from("chat_messages")
       .select("sender_type, message")
@@ -46,7 +47,6 @@ serve(async (req) => {
       })),
     ];
 
-    // Call Lovable AI – use lite/fast model + token cap for low latency
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -56,17 +56,15 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3.1-flash-lite",
         messages,
-        stream: false,
+        stream: true,
         max_tokens: 220,
         temperature: 0.4,
       }),
     });
 
-
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
+    if (!aiResponse.ok || !aiResponse.body) {
+      const errText = await aiResponse.text().catch(() => "");
       console.error("AI gateway error:", aiResponse.status, errText);
-      // Fallback message
       const fallback = "Thank you for your message! Our support team is currently unavailable. We'll get back to you as soon as possible. For urgent matters, please email support@morganfinance.com.";
       await supabase.from("chat_messages").insert({
         conversation_id,
@@ -75,25 +73,80 @@ serve(async (req) => {
         message: fallback,
         is_read: true,
       });
-      return new Response(JSON.stringify({ reply: fallback, source: "fallback" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      // Stream the fallback as a single SSE event so the client UI behaves consistently
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ delta: fallback })}\n\n`));
+          controller.enqueue(new TextEncoder().encode(`data: [DONE]\n\n`));
+          controller.close();
+        },
+      });
+      return new Response(stream, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
       });
     }
 
-    const aiData = await aiResponse.json();
-    const reply = aiData.choices?.[0]?.message?.content || "Thank you for reaching out! A support agent will be with you shortly.";
+    let fullText = "";
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
 
-    // Insert AI reply as admin message
-    await supabase.from("chat_messages").insert({
-      conversation_id,
-      sender_type: "admin",
-      sender_id: "ai-assistant",
-      message: reply,
-      is_read: true,
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = aiResponse.body!.getReader();
+        let buffer = "";
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            // Parse SSE lines
+            let nlIdx;
+            while ((nlIdx = buffer.indexOf("\n")) !== -1) {
+              const line = buffer.slice(0, nlIdx).trim();
+              buffer = buffer.slice(nlIdx + 1);
+              if (!line.startsWith("data:")) continue;
+              const data = line.slice(5).trim();
+              if (data === "[DONE]") continue;
+              try {
+                const json = JSON.parse(data);
+                const delta = json.choices?.[0]?.delta?.content;
+                if (delta) {
+                  fullText += delta;
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
+                }
+              } catch {
+                // ignore parse errors on keep-alive lines
+              }
+            }
+          }
+        } catch (err) {
+          console.error("stream read error", err);
+        }
+
+        // Persist the completed assistant message
+        const finalText = fullText || "Thank you for reaching out! A support agent will be with you shortly.";
+        await supabase.from("chat_messages").insert({
+          conversation_id,
+          sender_type: "admin",
+          sender_id: "ai-assistant",
+          message: finalText,
+          is_read: true,
+        });
+
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+        controller.close();
+      },
     });
 
-    return new Response(JSON.stringify({ reply, source: "ai" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(stream, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+      },
     });
   } catch (e) {
     console.error("chat-auto-reply error:", e);
