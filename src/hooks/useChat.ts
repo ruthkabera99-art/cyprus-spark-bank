@@ -121,29 +121,85 @@ export function useVisitorChat() {
     },
   });
 
-  // Auto-reply timer ref and typing state
-  const autoReplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Streaming reply state
   const [isAwaitingReply, setIsAwaitingReply] = useState(false);
+  const [streamingReply, setStreamingReply] = useState('');
+  const abortRef = useRef<AbortController | null>(null);
 
   const triggerAutoReply = useCallback(async (convId: string, visitorMessage: string) => {
     setIsAwaitingReply(true);
+    setStreamingReply('');
+
+    // Cancel any prior in-flight stream
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
-      await supabase.functions.invoke('chat-auto-reply', {
-        body: { conversation_id: convId, visitor_message: visitorMessage },
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || anonKey;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/chat-auto-reply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: anonKey,
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ conversation_id: convId, visitor_message: visitorMessage }),
+        signal: controller.signal,
       });
+
+      if (!res.ok || !res.body) throw new Error(`Stream failed: ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulated = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let nl;
+        while ((nl = buffer.indexOf('\n')) !== -1) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (!line.startsWith('data:')) continue;
+          const data = line.slice(5).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const json = JSON.parse(data);
+            if (json.delta) {
+              accumulated += json.delta;
+              setStreamingReply(accumulated);
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
     } catch (err) {
-      console.error('Auto-reply failed:', err);
+      if ((err as any)?.name !== 'AbortError') {
+        console.error('Auto-reply stream failed:', err);
+      }
     } finally {
       setIsAwaitingReply(false);
+      setStreamingReply('');
+      // Real-time subscription will fetch the persisted message
+      queryClient.invalidateQueries({ queryKey: ['chat-messages', convId] });
     }
-  }, []);
+  }, [queryClient]);
 
   // Send message mutation
   const sendMessage = useMutation({
     mutationFn: async ({ message, convId }: { message: string; convId?: string }) => {
       const targetConvId = convId || conversationId;
       if (!targetConvId) throw new Error('No conversation');
-      
+
       const { data, error } = await supabase
         .from('chat_messages')
         .insert({
@@ -155,39 +211,24 @@ export function useVisitorChat() {
         })
         .select()
         .single();
-      
+
       if (error) throw error;
       return { message: data as ChatMessage, convId: targetConvId, text: message };
     },
     onSuccess: ({ convId, text }) => {
       queryClient.invalidateQueries({ queryKey: ['chat-messages', conversationId] });
-      
-      // Clear any existing auto-reply timer
-      if (autoReplyTimerRef.current) {
-        clearTimeout(autoReplyTimerRef.current);
-      }
-      
-      // Set a 10-second timer: if no admin replies, trigger AI auto-reply
-      autoReplyTimerRef.current = setTimeout(() => {
-        const currentMessages = queryClient.getQueryData<ChatMessage[]>(['chat-messages', convId]);
-        const lastMessage = currentMessages?.[currentMessages.length - 1];
-        
-        if (!lastMessage || lastMessage.sender_type === 'visitor') {
-          triggerAutoReply(convId, text);
-        }
-      }, 10000); // 10 seconds
+      // Trigger AI streaming reply instantly
+      triggerAutoReply(convId, text);
     },
     onError: () => {
       toast.error('Failed to send message');
     },
   });
 
-  // Cleanup timer on unmount
+  // Cleanup in-flight stream on unmount
   useEffect(() => {
     return () => {
-      if (autoReplyTimerRef.current) {
-        clearTimeout(autoReplyTimerRef.current);
-      }
+      if (abortRef.current) abortRef.current.abort();
     };
   }, []);
 
