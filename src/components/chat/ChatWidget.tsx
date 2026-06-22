@@ -32,7 +32,7 @@ export function ChatWidget() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, streamingReply, isAwaitingReply]);
 
   // If user is logged in or conversation exists, skip name form
   useEffect(() => {
