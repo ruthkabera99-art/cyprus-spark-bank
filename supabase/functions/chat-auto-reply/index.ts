@@ -25,26 +25,28 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get recent conversation history for context
+    // Get recent conversation history for context (small window = faster)
     const { data: history } = await supabase
       .from("chat_messages")
       .select("sender_type, message")
       .eq("conversation_id", conversation_id)
-      .order("created_at", { ascending: true })
-      .limit(20);
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    const recent = (history || []).reverse();
 
     const messages = [
       {
         role: "system",
-        content: `You are MorganFinance's friendly AI support assistant. You help customers with banking questions about accounts, transfers, deposits, withdrawals, loans, and crypto services. Be concise, helpful, and professional. If a question requires human assistance (e.g. account-specific actions, disputes, complex issues), let the user know that a human agent will follow up soon. Never share sensitive information or make promises about specific financial outcomes.`,
+        content: `You are MorganFinance's AI support assistant. Answer banking questions (accounts, transfers, deposits, withdrawals, loans, crypto) briefly and clearly. Keep replies under 3 short sentences. If a request needs human help, say a human agent will follow up. Never share sensitive info.`,
       },
-      ...(history || []).map((m: any) => ({
+      ...recent.map((m: any) => ({
         role: m.sender_type === "visitor" ? "user" : "assistant",
-        content: m.message,
+        content: (m.message || "").slice(0, 600),
       })),
     ];
 
-    // Call Lovable AI
+    // Call Lovable AI – use lite/fast model + token cap for low latency
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -52,11 +54,14 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-3.1-flash-lite",
         messages,
         stream: false,
+        max_tokens: 220,
+        temperature: 0.4,
       }),
     });
+
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
