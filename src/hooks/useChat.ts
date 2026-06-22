@@ -262,6 +262,7 @@ export function useVisitorChat() {
     messages,
     isLoading: conversationLoading || messagesLoading,
     isAwaitingReply,
+    streamingReply,
     createConversation,
     sendMessage,
     visitorId,
