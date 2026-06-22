@@ -22,6 +22,7 @@ export function ChatWidget() {
     messages, 
     isLoading, 
     isAwaitingReply,
+    streamingReply,
     createConversation, 
     sendMessage 
   } = useVisitorChat();
@@ -31,7 +32,7 @@ export function ChatWidget() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, streamingReply, isAwaitingReply]);
 
   // If user is logged in or conversation exists, skip name form
   useEffect(() => {
@@ -202,17 +203,25 @@ export function ChatWidget() {
                         </span>
                       </div>
                     ))}
-                    {/* Typing indicator */}
-                    {isAwaitingReply && (
+                    {/* Streaming reply / typing indicator */}
+                    {(isAwaitingReply || streamingReply) && (
                       <div className="mr-auto bg-muted rounded-lg p-3 max-w-[80%] animate-fade-in">
-                        <span className="text-[10px] font-medium text-muted-foreground mb-1 block">
-                          MorganFinance Support
+                        <span className="text-[10px] font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          AI Assistant
                         </span>
-                        <div className="flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '300ms' }} />
-                        </div>
+                        {streamingReply ? (
+                          <p className="text-sm break-words whitespace-pre-wrap">
+                            {streamingReply}
+                            <span className="inline-block w-1 h-3 ml-0.5 bg-muted-foreground/60 animate-pulse align-middle" />
+                          </p>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
