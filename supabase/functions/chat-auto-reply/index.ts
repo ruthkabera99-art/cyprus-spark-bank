@@ -47,6 +47,12 @@ serve(async (req) => {
       })),
     ];
 
+    // Overall upstream timeout (45s) so we never hang forever
+    const upstreamController = new AbortController();
+    const upstreamTimeout = setTimeout(() => upstreamController.abort(), 45_000);
+    // Abort upstream when client disconnects
+    req.signal.addEventListener("abort", () => upstreamController.abort());
+
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -60,7 +66,8 @@ serve(async (req) => {
         max_tokens: 220,
         temperature: 0.4,
       }),
-    });
+      signal: upstreamController.signal,
+    }).finally(() => clearTimeout(upstreamTimeout));
 
     if (!aiResponse.ok || !aiResponse.body) {
       const errText = await aiResponse.text().catch(() => "");
