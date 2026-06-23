@@ -102,10 +102,31 @@ serve(async (req) => {
         const reader = aiResponse.body!.getReader();
         let buffer = "";
 
+        // Heartbeat: send an SSE comment every 10s so the connection
+        // never appears idle to proxies or the browser.
+        const heartbeat = setInterval(() => {
+          try {
+            controller.enqueue(encoder.encode(`: ping\n\n`));
+          } catch {
+            // controller already closed
+          }
+        }, 10_000);
+
+        // Stall watchdog: if no upstream bytes for 25s, abort and let
+        // the client retry rather than hang forever.
+        let lastChunkAt = Date.now();
+        const watchdog = setInterval(() => {
+          if (Date.now() - lastChunkAt > 25_000) {
+            console.warn("Upstream stalled, aborting");
+            upstreamController.abort();
+          }
+        }, 5_000);
+
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
+            lastChunkAt = Date.now();
             buffer += decoder.decode(value, { stream: true });
 
             // Parse SSE lines
@@ -130,6 +151,9 @@ serve(async (req) => {
           }
         } catch (err) {
           console.error("stream read error", err);
+        } finally {
+          clearInterval(heartbeat);
+          clearInterval(watchdog);
         }
 
         // Persist the completed assistant message
@@ -151,8 +175,9 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
+        "Cache-Control": "no-cache, no-transform",
         "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
       },
     });
   } catch (e) {
