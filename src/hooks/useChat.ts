@@ -132,66 +132,109 @@ export function useVisitorChat() {
 
     // Cancel any prior in-flight stream
     if (abortRef.current) abortRef.current.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
 
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const { data: { session } } = await supabase.auth.getSession();
-      const authToken = session?.access_token || anonKey;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const { data: { session } } = await supabase.auth.getSession();
+    const authToken = session?.access_token || anonKey;
 
-      const res = await fetch(`${supabaseUrl}/functions/v1/chat-auto-reply`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: anonKey,
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({ conversation_id: convId, visitor_message: visitorMessage }),
-        signal: controller.signal,
-      });
+    const MAX_ATTEMPTS = 3;
+    const OVERALL_TIMEOUT_MS = 60_000; // hard cap per attempt
+    const IDLE_TIMEOUT_MS = 20_000;    // no token for 20s => treat as stalled
+    let accumulated = '';
+    let success = false;
 
-      if (!res.ok || !res.body) throw new Error(`Stream failed: ${res.status}`);
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS && !success; attempt++) {
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let accumulated = '';
+      // Overall request timeout
+      const overallTimer = setTimeout(() => controller.abort(), OVERALL_TIMEOUT_MS);
+      // Idle/stall timer — reset on every received chunk
+      let idleTimer: ReturnType<typeof setTimeout> | null = null;
+      const resetIdle = () => {
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => controller.abort(), IDLE_TIMEOUT_MS);
+      };
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
+      try {
+        resetIdle();
+        const res = await fetch(`${supabaseUrl}/functions/v1/chat-auto-reply`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: anonKey,
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            conversation_id: convId,
+            visitor_message: visitorMessage,
+            // Hint to server so it can skip already-streamed prefix on retry
+            resume_from: accumulated.length,
+          }),
+          signal: controller.signal,
+        });
 
-        let nl;
-        while ((nl = buffer.indexOf('\n')) !== -1) {
-          const line = buffer.slice(0, nl).trim();
-          buffer = buffer.slice(nl + 1);
-          if (!line.startsWith('data:')) continue;
-          const data = line.slice(5).trim();
-          if (data === '[DONE]') continue;
-          try {
-            const json = JSON.parse(data);
-            if (json.delta) {
-              accumulated += json.delta;
-              setStreamingReply(accumulated);
+        if (!res.ok || !res.body) throw new Error(`Stream failed: ${res.status}`);
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let sawDone = false;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          resetIdle();
+          buffer += decoder.decode(value, { stream: true });
+
+          let nl;
+          while ((nl = buffer.indexOf('\n')) !== -1) {
+            const line = buffer.slice(0, nl).trim();
+            buffer = buffer.slice(nl + 1);
+            if (!line || line.startsWith(':')) continue; // heartbeat comment
+            if (!line.startsWith('data:')) continue;
+            const data = line.slice(5).trim();
+            if (data === '[DONE]') { sawDone = true; continue; }
+            try {
+              const json = JSON.parse(data);
+              if (json.delta) {
+                accumulated += json.delta;
+                setStreamingReply(accumulated);
+              }
+            } catch {
+              // ignore
             }
-          } catch {
-            // ignore
           }
         }
+
+        // Stream ended cleanly OR upstream closed — accept if we saw [DONE]
+        // or got any content. Otherwise treat as stall and retry.
+        if (sawDone || accumulated.length > 0) {
+          success = true;
+        } else {
+          throw new Error('Empty stream');
+        }
+      } catch (err) {
+        const aborted = (err as any)?.name === 'AbortError';
+        console.warn(`Auto-reply attempt ${attempt} failed`, { aborted, err });
+        // Don't retry if the user/component cancelled intentionally
+        if (aborted && abortRef.current !== controller) break;
+        if (attempt < MAX_ATTEMPTS) {
+          // Exponential backoff: 500ms, 1500ms
+          await new Promise((r) => setTimeout(r, 500 * Math.pow(3, attempt - 1)));
+        } else {
+          toast.error('Reply timed out. Please try again.');
+        }
+      } finally {
+        clearTimeout(overallTimer);
+        if (idleTimer) clearTimeout(idleTimer);
       }
-    } catch (err) {
-      if ((err as any)?.name !== 'AbortError') {
-        console.error('Auto-reply stream failed:', err);
-      }
-    } finally {
-      setIsAwaitingReply(false);
-      setStreamingReply('');
-      // Real-time subscription will fetch the persisted message
-      queryClient.invalidateQueries({ queryKey: ['chat-messages', convId] });
     }
+
+    setIsAwaitingReply(false);
+    setStreamingReply('');
+    queryClient.invalidateQueries({ queryKey: ['chat-messages', convId] });
   }, [queryClient]);
 
   // Send message mutation
