@@ -1,6 +1,13 @@
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
+import "@fontsource/libre-baskerville/400.css";
+import "@fontsource/libre-baskerville/400-italic.css";
+import "@fontsource/libre-baskerville/700.css";
+import "@fontsource/ibm-plex-sans/300.css";
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/500.css";
+import "@fontsource/ibm-plex-sans/600.css";
 import "./index.css";
 
 // Register service worker only in production standalone PWA mode
