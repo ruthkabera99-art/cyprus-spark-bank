@@ -110,8 +110,8 @@ export default {
         "scale-in": "scale-in 0.3s ease-out forwards",
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        serif: ['Playfair Display', 'serif'],
+        sans: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+        serif: ['"Libre Baskerville"', 'Georgia', 'serif'],
       },
     },
   },
