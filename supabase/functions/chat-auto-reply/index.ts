@@ -26,30 +26,30 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Small history window for low latency
+    // Minimal history window for fastest latency
     const { data: history } = await supabase
       .from("chat_messages")
       .select("sender_type, message")
       .eq("conversation_id", conversation_id)
       .order("created_at", { ascending: false })
-      .limit(8);
+      .limit(6);
 
     const recent = (history || []).reverse();
 
     const messages = [
       {
         role: "system",
-        content: `You are MorganFinance's AI support assistant. Answer banking questions (accounts, transfers, deposits, withdrawals, loans, crypto) briefly and clearly. Keep replies under 3 short sentences. If a request needs human help, say a human agent will follow up. Never share sensitive info.`,
+        content: `You are MorganFinance's AI support assistant. Reply instantly and helpfully about banking (accounts, transfers, deposits, withdrawals, loans, crypto). Rules: max 2 short sentences, no filler, no repeated disclaimers, plain language. If human help is needed, say "A human agent will follow up shortly." Never share sensitive info.`,
       },
       ...recent.map((m: any) => ({
         role: m.sender_type === "visitor" ? "user" : "assistant",
-        content: (m.message || "").slice(0, 600),
+        content: (m.message || "").slice(0, 400),
       })),
     ];
 
-    // Overall upstream timeout (45s) so we never hang forever
+    // Fast-fail upstream timeout (30s) — client retries if exceeded
     const upstreamController = new AbortController();
-    const upstreamTimeout = setTimeout(() => upstreamController.abort(), 45_000);
+    const upstreamTimeout = setTimeout(() => upstreamController.abort(), 30_000);
     // Abort upstream when client disconnects
     req.signal.addEventListener("abort", () => upstreamController.abort());
 
@@ -63,8 +63,9 @@ serve(async (req) => {
         model: "google/gemini-3.1-flash-lite",
         messages,
         stream: true,
-        max_tokens: 220,
-        temperature: 0.4,
+        max_tokens: 140,
+        temperature: 0.3,
+        top_p: 0.9,
       }),
       signal: upstreamController.signal,
     }).finally(() => clearTimeout(upstreamTimeout));
