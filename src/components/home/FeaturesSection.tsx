@@ -39,10 +39,10 @@ export function FeaturesSection() {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-4">
-            Why Choose MorganFinance Bank?
+            Why 2 Million Customers Bank with MorganFinance
           </h2>
           <p className="text-muted-foreground">
-            We combine cutting-edge technology with decades of banking expertise to deliver an unmatched banking experience.
+            FDIC-insured accounts, 256-bit encryption, and 24/7 support — everything you need for confident personal and business banking in one place.
           </p>
         </div>
 
