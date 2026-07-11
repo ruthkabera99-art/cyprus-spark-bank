@@ -31,12 +31,12 @@ export function HeroSection() {
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-primary-foreground leading-tight">
-              Secure Banking{' '}
-              <span className="text-accent">You Can Trust</span>
+              Online Banking{' '}
+              <span className="text-accent">Built on Trust</span>
             </h1>
 
             <p className="text-base sm:text-lg text-primary-foreground/85 max-w-lg leading-relaxed">
-              Personal & business banking, collateral-backed loans, and secure digital transactions — protected by 256-bit encryption and backed by 50+ years of financial expertise.
+              Open an FDIC-insured checking, savings, or business account with MorganFinance Bank. Get instant transfers, collateral-backed loans, and 24/7 secure digital banking — trusted by over 2 million customers.
             </p>
 
             {/* Key benefits */}
