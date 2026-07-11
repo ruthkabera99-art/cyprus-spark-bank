@@ -1,24 +1,31 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Shield, CheckCircle, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import heroCustomerService from '@/assets/hero-customer-service-bright.jpg';
 
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-foreground min-h-[600px] md:min-h-[680px] lg:min-h-[720px] flex items-center">
       {/* Customer service photographic background — fully visible */}
       <div className="absolute inset-0">
-        <img
-          src={heroCustomerService}
-          alt="MorganFinance banker shaking hands with a customer"
-          width={1920}
-          height={1080}
-          className="absolute inset-0 w-full h-full object-cover object-[45%_center] sm:object-center animate-[heroZoom_20s_ease-in-out_infinite_alternate] brightness-110 contrast-110"
-        />
+        <picture>
+          <source media="(max-width: 767px)" srcSet="/hero/bg-mobile.webp" type="image/webp" />
+          <source srcSet="/hero/bg.webp" type="image/webp" />
+          <img
+            src="/hero/bg.webp"
+            alt="MorganFinance banker shaking hands with a customer"
+            width={1376}
+            height={768}
+            fetchPriority="high"
+            decoding="async"
+            loading="eager"
+            className="absolute inset-0 w-full h-full object-cover object-[45%_center] sm:object-center animate-[heroZoom_20s_ease-in-out_infinite_alternate] brightness-110 contrast-110"
+          />
+        </picture>
         {/* Minimal scrim — just enough to anchor any text that might sit directly on the image edge */}
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/60 via-foreground/20 to-transparent md:from-foreground/50 md:via-foreground/10 md:to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-foreground/40 via-transparent to-transparent" />
       </div>
+
 
       <div className="container mx-auto px-4 relative w-full">
         <div className="grid lg:grid-cols-2 gap-8 items-center">
