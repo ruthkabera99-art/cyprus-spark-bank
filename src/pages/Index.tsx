@@ -36,14 +36,32 @@ const faqJsonLd = {
   })),
 };
 
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://morganfinance.us/' },
+  ],
+};
+
+const servicesJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FinancialProduct',
+  name: 'MorganFinance Banking Services',
+  provider: { '@type': 'BankOrCreditUnion', name: 'MorganFinance Bank', url: 'https://morganfinance.us' },
+  description: 'FDIC-insured checking, savings, business banking, and collateral-backed loans with 24/7 secure digital access.',
+  areaServed: 'US',
+  feesAndCommissionsSpecification: 'No monthly maintenance fees on personal checking. Transparent fee schedule.',
+};
+
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="MorganFinance Bank — Trusted Digital Banking"
-        description="FDIC-insured personal & business banking, collateral-backed loans, and secure digital transactions. Trusted by 2M+ customers."
+        title="MorganFinance Bank — Online Banking, Loans & FDIC-Insured Accounts"
+        description="Open an FDIC-insured checking, savings, or business account with MorganFinance Bank. Instant transfers, collateral-backed loans, and 24/7 secure digital banking trusted by 2M+ customers."
         path="/"
-        jsonLd={faqJsonLd}
+        jsonLd={[faqJsonLd, breadcrumbJsonLd, servicesJsonLd]}
       />
       <TopBar />
       <Header />
