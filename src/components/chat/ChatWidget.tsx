@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useVisitorChat } from '@/hooks/useChat';
 import { useAuth } from '@/contexts/AuthContext';
+import { ChatQuestionnaire } from './ChatQuestionnaire';
 import { cn } from '@/lib/utils';
 
 export function ChatWidget() {
@@ -14,6 +15,7 @@ export function ChatWidget() {
   const [visitorEmail, setVisitorEmail] = useState('');
   const [visitorPhone, setVisitorPhone] = useState('');
   const [showNameForm, setShowNameForm] = useState(true);
+  const [showQuestionnaire, setShowQuestionnaire] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   
@@ -52,22 +54,29 @@ export function ChatWidget() {
     setShowNameForm(false);
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim()) return;
-    
+  const deliver = async (text: string) => {
     if (!conversation) {
-      // Create conversation first, then send message
       const newConv = await createConversation.mutateAsync({
         name: user?.email || 'Visitor',
         email: user?.email,
       });
-      await sendMessage.mutateAsync({ message: message.trim(), convId: newConv.id });
+      await sendMessage.mutateAsync({ message: text, convId: newConv.id });
     } else {
-      await sendMessage.mutateAsync({ message: message.trim() });
+      await sendMessage.mutateAsync({ message: text });
     }
-    
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+    setShowQuestionnaire(false);
+    await deliver(message.trim());
     setMessage('');
+  };
+
+  const handleQuestionnaireComplete = async (summary: string) => {
+    setShowQuestionnaire(false);
+    await deliver(summary);
   };
 
   const formatTime = (dateString: string) => {
@@ -152,6 +161,12 @@ export function ChatWidget() {
                 )}
               </Button>
             </form>
+          ) : showQuestionnaire && messages.length === 0 ? (
+            <ChatQuestionnaire
+              onComplete={handleQuestionnaireComplete}
+              onSkip={() => setShowQuestionnaire(false)}
+              disabled={sendMessage.isPending || createConversation.isPending}
+            />
           ) : (
             <>
               {/* Messages Area */}
