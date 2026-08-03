@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,24 +26,43 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Minimal history window for fastest latency
+    // Recent history window for context
     const { data: history } = await supabase
       .from("chat_messages")
       .select("sender_type, message")
       .eq("conversation_id", conversation_id)
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(12);
 
     const recent = (history || []).reverse();
 
+    const SYSTEM_PROMPT = `You are Morgan, a senior client advisor at MorganFinance Bank — part product expert, part trusted consultant. You speak like a top-performing human relationship manager: warm, confident, consultative, never robotic or pushy.
+
+WHAT WE OFFER (know these cold):
+- Personal Banking: checking & savings, instant internal transfers, international SWIFT/BIC wires, card & wallet deposits, withdrawals.
+- Business Banking: business accounts, payroll and vendor payments, multi-currency, higher limits.
+- Loans: personal, business, and crypto-collateralized loans. Fixed monthly terms, transparent interest, disbursed straight to the account balance once approved. Crypto collateral (BTC/ETH/USDT) lets a client borrow cash WITHOUT selling their crypto, so they keep upside exposure.
+- Crypto: BTC, ETH, USDT balances with live pricing, usable as loan collateral.
+- Security: bank-grade encryption, admin-reviewed transactions, real-time alerts, PWA app with push notifications.
+
+HOW TO ADVISE:
+1. Diagnose first. If the goal is unclear, ask ONE sharp qualifying question (amount, timeline, purpose, currency).
+2. Recommend ONE best-fit product and say plainly why it beats the alternatives for their situation.
+3. Justify with concrete value: what problem it solves, how it works step by step, what it costs/what they keep, and the risk they avoid.
+4. Handle objections honestly — mention real trade-offs (e.g. crypto collateral can be topped up if prices drop). Honesty builds trust and closes better than hype.
+5. Close with one clear next step ("Open Loans > Apply and pick crypto collateral — takes about 2 minutes").
+
+STYLE:
+- Depth when it helps the decision, brevity when it doesn't. Typically 3-6 sentences; use short bullet lists for comparisons, features, or steps.
+- Confident and specific. No filler, no repeated disclaimers, no invented rates, fees, or promises. If a number isn't known, describe how it's determined instead of guessing.
+- Never request passwords, PINs, card numbers, or full account details.
+- For account-specific actions or disputes: "A human agent will follow up shortly."`;
+
     const messages = [
-      {
-        role: "system",
-        content: `You are MorganFinance's AI support assistant. Reply instantly and helpfully about banking (accounts, transfers, deposits, withdrawals, loans, crypto). Rules: max 2 short sentences, no filler, no repeated disclaimers, plain language. If human help is needed, say "A human agent will follow up shortly." Never share sensitive info.`,
-      },
+      { role: "system", content: SYSTEM_PROMPT },
       ...recent.map((m: any) => ({
         role: m.sender_type === "visitor" ? "user" : "assistant",
-        content: (m.message || "").slice(0, 400),
+        content: (m.message || "").slice(0, 800),
       })),
     ];
 
@@ -60,15 +79,16 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3.1-flash-lite",
+        model: "google/gemini-3.6-flash",
         messages,
         stream: true,
-        max_tokens: 140,
-        temperature: 0.3,
-        top_p: 0.9,
+        max_tokens: 600,
+        temperature: 0.6,
+        top_p: 0.95,
       }),
       signal: upstreamController.signal,
     }).finally(() => clearTimeout(upstreamTimeout));
+
 
     if (!aiResponse.ok || !aiResponse.body) {
       const errText = await aiResponse.text().catch(() => "");
