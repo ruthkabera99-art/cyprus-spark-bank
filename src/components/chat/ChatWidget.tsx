@@ -15,6 +15,7 @@ export function ChatWidget() {
   const [visitorEmail, setVisitorEmail] = useState('');
   const [visitorPhone, setVisitorPhone] = useState('');
   const [showNameForm, setShowNameForm] = useState(true);
+  const [showQuestionnaire, setShowQuestionnaire] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   
