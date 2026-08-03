@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useVisitorChat } from '@/hooks/useChat';
 import { useAuth } from '@/contexts/AuthContext';
+import { ChatQuestionnaire } from './ChatQuestionnaire';
 import { cn } from '@/lib/utils';
 
 export function ChatWidget() {
