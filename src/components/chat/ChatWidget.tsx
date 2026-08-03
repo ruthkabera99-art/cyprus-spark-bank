@@ -161,6 +161,12 @@ export function ChatWidget() {
                 )}
               </Button>
             </form>
+          ) : showQuestionnaire && messages.length === 0 ? (
+            <ChatQuestionnaire
+              onComplete={handleQuestionnaireComplete}
+              onSkip={() => setShowQuestionnaire(false)}
+              disabled={sendMessage.isPending || createConversation.isPending}
+            />
           ) : (
             <>
               {/* Messages Area */}
