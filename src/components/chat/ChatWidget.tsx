@@ -53,22 +53,29 @@ export function ChatWidget() {
     setShowNameForm(false);
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim()) return;
-    
+  const deliver = async (text: string) => {
     if (!conversation) {
-      // Create conversation first, then send message
       const newConv = await createConversation.mutateAsync({
         name: user?.email || 'Visitor',
         email: user?.email,
       });
-      await sendMessage.mutateAsync({ message: message.trim(), convId: newConv.id });
+      await sendMessage.mutateAsync({ message: text, convId: newConv.id });
     } else {
-      await sendMessage.mutateAsync({ message: message.trim() });
+      await sendMessage.mutateAsync({ message: text });
     }
-    
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+    setShowQuestionnaire(false);
+    await deliver(message.trim());
     setMessage('');
+  };
+
+  const handleQuestionnaireComplete = async (summary: string) => {
+    setShowQuestionnaire(false);
+    await deliver(summary);
   };
 
   const formatTime = (dateString: string) => {
