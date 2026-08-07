@@ -11,6 +11,8 @@ import "@fontsource/ibm-plex-sans/600.css";
 import "./index.css";
 // Capture the browser install prompt as early as possible (fires before React mounts)
 import "./lib/pwaInstall";
+import { registerServiceWorkerWithUpdates } from "./lib/swUpdate";
+
 
 // Register service worker only in production standalone PWA mode
 const isInIframe = (() => {
@@ -22,8 +24,9 @@ const isPreviewHost =
 
 if ("serviceWorker" in navigator && !isInIframe && !isPreviewHost) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    registerServiceWorkerWithUpdates("/sw.js");
   });
+
 
   // iOS-safe deep link fallback: when the SW can't navigate the client
   // directly (common on iOS), it posts a message and we route in-app.
