@@ -1,35 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, Download, Shield, Zap, Bell, Apple } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
+import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 
 export function DownloadAppSection() {
   const navigate = useNavigate();
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const { canInstall, installed: isInstalled, install } = useInstallPrompt();
+  const deferredPrompt = canInstall;
 
   useEffect(() => {
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-    }
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    const installedHandler = () => {
-      setIsInstalled(true);
-      setDeferredPrompt(null);
-      toast.success('MorganFinance app installed!');
-    };
-    window.addEventListener('appinstalled', installedHandler);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-      window.removeEventListener('appinstalled', installedHandler);
-    };
-  }, []);
+    if (isInstalled) return;
+  }, [isInstalled]);
 
   const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -38,28 +22,22 @@ export function DownloadAppSection() {
       toast.info('App is already installed. Open it from your home screen.');
       return;
     }
-    if (deferredPrompt) {
-      try {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-          toast.success('Installing MorganFinance...');
-        }
-        setDeferredPrompt(null);
+    if (canInstall) {
+      const outcome = await install();
+      if (outcome === 'accepted') {
+        toast.success('Installing MorganFinance...');
         return;
-      } catch {
-        // fall through to instructions page
       }
+      if (outcome === 'dismissed') return;
     }
     // iOS Safari has no install prompt API — show step-by-step
     if (platform === 'ios' || isIOS) {
       navigate('/install');
       return;
     }
-    // Android without prompt yet — guide user
-    toast.info('Tap your browser menu, then "Install app" or "Add to Home screen".');
     navigate('/install');
   };
+
 
   return (
     <section className="py-20 bg-gradient-to-br from-foreground via-foreground to-primary/90 relative overflow-hidden">
