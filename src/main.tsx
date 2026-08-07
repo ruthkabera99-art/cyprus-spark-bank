@@ -11,6 +11,8 @@ import "@fontsource/ibm-plex-sans/600.css";
 import "./index.css";
 // Capture the browser install prompt as early as possible (fires before React mounts)
 import "./lib/pwaInstall";
+import { registerServiceWorkerWithUpdates } from "./lib/swUpdate";
+
 
 // Register service worker only in production standalone PWA mode
 const isInIframe = (() => {

@@ -12,7 +12,13 @@ export function UpdatePrompt() {
   const [{ updateAvailable }, setState] = useState(getUpdateState);
   const [applying, setApplying] = useState(false);
 
-  useEffect(() => subscribeUpdate(() => setState(getUpdateState())), []);
+  useEffect(() => {
+    const unsub = subscribeUpdate(() => setState(getUpdateState()));
+    return () => {
+      unsub();
+    };
+  }, []);
+
 
   if (!updateAvailable) return null;
 
