@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { SEO } from '@/components/SEO';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -23,11 +24,13 @@ const detectAndroidBrowser = (ua: string): AndroidBrowser => {
 };
 
 const Install = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const { canInstall, installed: pwaInstalled, install } = useInstallPrompt();
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
   const [androidBrowser, setAndroidBrowser] = useState<AndroidBrowser>('other');
+  const autoFired = useRef(false);
+  const deferredPrompt = canInstall;
 
   useEffect(() => {
     const ua = navigator.userAgent;
@@ -35,37 +38,28 @@ const Install = () => {
     setIsIOS(/iPad|iPhone|iPod/.test(ua));
     setIsAndroid(android);
     if (android) setAndroidBrowser(detectAndroidBrowser(ua));
-
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-    }
-
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    const installed = () => {
-      setIsInstalled(true);
-      setDeferredPrompt(null);
-    };
-    window.addEventListener('appinstalled', installed);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-      window.removeEventListener('appinstalled', installed);
-    };
   }, []);
 
+  useEffect(() => {
+    if (pwaInstalled) setIsInstalled(true);
+  }, [pwaInstalled]);
+
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    const outcome = await install();
     if (outcome === 'accepted') {
       setIsInstalled(true);
       toast.success('Installing MorganFinance…');
     }
-    setDeferredPrompt(null);
   };
+
+  // Auto-start the install as soon as the browser allows it — no instructions needed.
+  useEffect(() => {
+    if (!canInstall || autoFired.current || isInstalled) return;
+    autoFired.current = true;
+    handleInstall();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canInstall, isInstalled]);
+
 
   const openInChrome = () => {
     const host = window.location.host;
