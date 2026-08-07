@@ -1,11 +1,18 @@
-const CACHE_NAME = "morganfinance-offline-v1";
+const CACHE_NAME = "morganfinance-offline-v2";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.add(OFFLINE_URL))
   );
-  self.skipWaiting();
+  // Do NOT skipWaiting automatically: the app shows an "Update available"
+  // prompt and the user decides when to switch over.
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("activate", (event) => {
@@ -16,6 +23,7 @@ self.addEventListener("activate", (event) => {
   );
   self.clients.claim();
 });
+
 
 self.addEventListener("fetch", (event) => {
   if (event.request.mode === "navigate") {

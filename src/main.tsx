@@ -22,8 +22,9 @@ const isPreviewHost =
 
 if ("serviceWorker" in navigator && !isInIframe && !isPreviewHost) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    registerServiceWorkerWithUpdates("/sw.js");
   });
+
 
   // iOS-safe deep link fallback: when the SW can't navigate the client
   // directly (common on iOS), it posts a message and we route in-app.
