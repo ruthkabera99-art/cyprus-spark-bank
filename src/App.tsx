@@ -16,6 +16,7 @@ import PersonalBanking from "./pages/PersonalBanking";
 import BusinessBanking from "./pages/BusinessBanking";
 import Loans from "./pages/Loans";
 import About from "./pages/About";
+import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
