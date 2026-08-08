@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
+import { trackEvent, InstallEvents } from '@/lib/analytics';
+
 import { SEO } from '@/components/SEO';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -121,7 +123,7 @@ const Install = () => {
                     <Smartphone className="w-12 h-12 text-primary mx-auto" />
                     <h2 className="text-xl font-bold">One-Tap Install</h2>
                     <p className="text-muted-foreground">Tap the button below to install MorganFinance instantly.</p>
-                    <Button size="lg" onClick={handleInstall} className="gap-2">
+                    <Button size="lg" onClick={() => handleInstall('install_page_button')} className="gap-2">
                       <Download className="w-5 h-5" />
                       Install MorganFinance App
                     </Button>
