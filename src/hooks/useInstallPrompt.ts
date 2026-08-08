@@ -20,7 +20,7 @@ export function useInstallPrompt() {
     };
   }, []);
 
-  const install = useCallback(() => promptInstall(), []);
+  const install = useCallback((source = 'unknown') => promptInstall(source), []);
 
   return { ...state, install };
 }

@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
+import { trackEvent, InstallEvents } from '@/lib/analytics';
+
 import { SEO } from '@/components/SEO';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -44,8 +46,11 @@ const Install = () => {
     if (pwaInstalled) setIsInstalled(true);
   }, [pwaInstalled]);
 
-  const handleInstall = async () => {
-    const outcome = await install();
+  const handleInstall = async (source = 'install_page_button') => {
+    if (source !== 'install_page_auto') {
+      trackEvent(InstallEvents.DownloadClick, { source, can_install: canInstall });
+    }
+    const outcome = await install(source);
     if (outcome === 'accepted') {
       setIsInstalled(true);
       toast.success('Installing MorganFinance…');
@@ -56,9 +61,10 @@ const Install = () => {
   useEffect(() => {
     if (!canInstall || autoFired.current || isInstalled) return;
     autoFired.current = true;
-    handleInstall();
+    handleInstall('install_page_auto');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canInstall, isInstalled]);
+
 
 
   const openInChrome = () => {
@@ -117,7 +123,7 @@ const Install = () => {
                     <Smartphone className="w-12 h-12 text-primary mx-auto" />
                     <h2 className="text-xl font-bold">One-Tap Install</h2>
                     <p className="text-muted-foreground">Tap the button below to install MorganFinance instantly.</p>
-                    <Button size="lg" onClick={handleInstall} className="gap-2">
+                    <Button size="lg" onClick={() => handleInstall('install_page_button')} className="gap-2">
                       <Download className="w-5 h-5" />
                       Install MorganFinance App
                     </Button>

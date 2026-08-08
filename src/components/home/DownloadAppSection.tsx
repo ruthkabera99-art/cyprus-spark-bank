@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
+import { trackEvent, InstallEvents } from '@/lib/analytics';
+
 
 export function DownloadAppSection() {
   const navigate = useNavigate();
@@ -18,12 +20,18 @@ export function DownloadAppSection() {
   const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   const handleInstall = async (platform: 'android' | 'ios') => {
+    trackEvent(InstallEvents.DownloadClick, {
+      platform,
+      source: 'home_download_section',
+      can_install: canInstall,
+      already_installed: isInstalled,
+    });
     if (isInstalled) {
       toast.info('App is already installed. Open it from your home screen.');
       return;
     }
     if (canInstall) {
-      const outcome = await install();
+      const outcome = await install(`home_download_${platform}`);
       if (outcome === 'accepted') {
         toast.success('Installing MorganFinance...');
         return;
@@ -37,6 +45,7 @@ export function DownloadAppSection() {
     }
     navigate('/install');
   };
+
 
 
   return (
