@@ -44,8 +44,11 @@ const Install = () => {
     if (pwaInstalled) setIsInstalled(true);
   }, [pwaInstalled]);
 
-  const handleInstall = async () => {
-    const outcome = await install();
+  const handleInstall = async (source = 'install_page_button') => {
+    if (source !== 'install_page_auto') {
+      trackEvent(InstallEvents.DownloadClick, { source, can_install: canInstall });
+    }
+    const outcome = await install(source);
     if (outcome === 'accepted') {
       setIsInstalled(true);
       toast.success('Installing MorganFinance…');
@@ -56,9 +59,10 @@ const Install = () => {
   useEffect(() => {
     if (!canInstall || autoFired.current || isInstalled) return;
     autoFired.current = true;
-    handleInstall();
+    handleInstall('install_page_auto');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canInstall, isInstalled]);
+
 
 
   const openInChrome = () => {
