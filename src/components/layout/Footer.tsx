@@ -51,6 +51,7 @@ export function Footer() {
                 { label: 'Business Banking', path: '/business' },
                 { label: 'Loans & Collateral', path: '/loans' },
                 { label: 'About Us', path: '/about' },
+                { label: 'Contact', path: '/contact' },
               ].map((item) => (
                 <li key={item.label}>
                   <Link to={item.path} className="text-sm opacity-80 hover:opacity-100 hover:text-primary transition-all">
