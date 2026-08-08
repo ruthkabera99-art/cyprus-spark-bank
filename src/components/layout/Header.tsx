@@ -21,6 +21,7 @@ const navItems = [
   { label: 'Business Banking', path: '/business' },
   { label: 'Loans & Collateral', path: '/loans' },
   { label: 'About Us', path: '/about' },
+  { label: 'Contact', path: '/contact' },
 ];
 
 export function Header() {
