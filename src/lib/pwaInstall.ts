@@ -2,6 +2,8 @@
 // `beforeinstallprompt` often fires before any React component mounts,
 // so we capture it at module load and share it app-wide.
 
+import { trackEvent, InstallEvents } from '@/lib/analytics';
+
 type BIPEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -9,6 +11,8 @@ type BIPEvent = Event & {
 
 let deferredPrompt: BIPEvent | null = null;
 let installed = false;
+/** Where the current install attempt came from (button, /install page, auto). */
+let lastSource = 'unknown';
 const listeners = new Set<() => void>();
 
 const notify = () => listeners.forEach((l) => l());
@@ -25,12 +29,14 @@ if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e as BIPEvent;
+    trackEvent(InstallEvents.Available, { platform: navigator.platform });
     notify();
   });
 
   window.addEventListener('appinstalled', () => {
     installed = true;
     deferredPrompt = null;
+    trackEvent(InstallEvents.Installed, { source: lastSource });
     notify();
   });
 }
@@ -42,18 +48,31 @@ export const subscribeInstall = (cb: () => void) => {
 
 export const getInstallState = () => ({ canInstall: !!deferredPrompt, installed });
 
-/** Fires the native install prompt. Returns true when the user accepted. */
-export const promptInstall = async (): Promise<'accepted' | 'dismissed' | 'unavailable'> => {
-  if (!deferredPrompt) return 'unavailable';
+/** Fires the native install prompt. Returns the user's choice. */
+export const promptInstall = async (
+  source = 'unknown',
+): Promise<'accepted' | 'dismissed' | 'unavailable'> => {
+  lastSource = source;
+  if (!deferredPrompt) {
+    trackEvent(InstallEvents.PromptUnavailable, { source });
+    return 'unavailable';
+  }
   try {
+    trackEvent(InstallEvents.PromptShown, { source });
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     deferredPrompt = null;
+    trackEvent(
+      outcome === 'accepted' ? InstallEvents.PromptAccepted : InstallEvents.PromptDismissed,
+      { source },
+    );
     notify();
     return outcome;
-  } catch {
+  } catch (err) {
     deferredPrompt = null;
+    trackEvent(InstallEvents.PromptUnavailable, { source, error: String(err) });
     notify();
     return 'unavailable';
   }
 };
+
