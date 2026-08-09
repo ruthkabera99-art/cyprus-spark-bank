@@ -26,6 +26,8 @@ export type SiteSettings = {
   hours_fri: string;
   hours_sat: string;
   hours_sun: string;
+  turnstile_site_key: string;
+
   [key: string]: string;
 };
 
@@ -42,7 +44,9 @@ const DEFAULTS: SiteSettings = {
   hours_fri: '9:00 AM – 5:00 PM',
   hours_sat: 'Closed',
   hours_sun: 'Closed',
+  turnstile_site_key: '',
 };
+
 
 const DAY_SHORT: Record<DayKey, string> = {
   mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun',

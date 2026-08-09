@@ -39,7 +39,9 @@ const settingsSchema = z.object({
   hours_fri: z.string().trim().max(60),
   hours_sat: z.string().trim().max(60),
   hours_sun: z.string().trim().max(60),
+  turnstile_site_key: z.string().trim().max(100).optional().or(z.literal('')),
 });
+
 
 type FieldErrors = Partial<Record<keyof SiteSettings, string>>;
 
@@ -165,7 +167,25 @@ export function SiteSettingsPanel() {
           {fieldError('nmls_number')}
         </div>
 
+        <div className="grid gap-2">
+          <Label htmlFor="turnstile_site_key" className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-primary" /> Turnstile site key (spam protection)
+          </Label>
+          <Input
+            id="turnstile_site_key"
+            value={form.turnstile_site_key ?? ''}
+            onChange={(e) => set('turnstile_site_key', e.target.value)}
+            placeholder="0x4AAAAAAA..."
+            aria-invalid={!!errors.turnstile_site_key}
+          />
+          <p className="text-xs text-muted-foreground">
+            Public site key from Cloudflare Turnstile. Leave blank to disable the challenge on the contact form.
+          </p>
+          {fieldError('turnstile_site_key')}
+        </div>
+
         <Separator />
+
 
         <div className="space-y-3">
           <div className="flex items-center gap-2">
