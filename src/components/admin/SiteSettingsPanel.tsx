@@ -39,7 +39,9 @@ const settingsSchema = z.object({
   hours_fri: z.string().trim().max(60),
   hours_sat: z.string().trim().max(60),
   hours_sun: z.string().trim().max(60),
+  turnstile_site_key: z.string().trim().max(100).optional().or(z.literal('')),
 });
+
 
 type FieldErrors = Partial<Record<keyof SiteSettings, string>>;
 
