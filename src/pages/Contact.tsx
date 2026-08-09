@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { z } from 'zod';
 import { SEO } from '@/components/SEO';
 import { Header } from '@/components/layout/Header';
@@ -8,9 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Mail, Phone, MapPin, Clock, Shield } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Shield, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSiteSettings, DAYS } from '@/hooks/useSiteSettings';
+import { Turnstile } from '@/components/Turnstile';
+import { supabase } from '@/integrations/supabase/client';
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, 'Please enter your name').max(100, 'Name must be under 100 characters'),
@@ -27,17 +29,27 @@ export default function Contact() {
   const { data: settings } = useSiteSettings();
   const [values, setValues] = useState<FormValues>(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [resetSignal, setResetSignal] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
+  const mountedAt = useRef(Date.now());
+
+  useEffect(() => {
+    mountedAt.current = Date.now();
+  }, []);
 
   const phone = settings?.contact_phone ?? '+1 (800) 123-4567';
   const email = settings?.contact_email ?? 'support@morganfinancebank.com';
   const address = settings?.contact_address ?? '123 Financial District, Banking Tower, City Center';
+  const siteKey = (settings?.turnstile_site_key ?? '').trim();
 
   const set = (key: keyof FormValues) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setValues((v) => ({ ...v, [key]: e.target.value }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = contactSchema.safeParse(values);
     if (!result.success) {
@@ -50,11 +62,49 @@ export default function Contact() {
       toast.error('Please fix the highlighted fields');
       return;
     }
-    const d = result.data;
-    const body = `Name: ${d.name}\nEmail: ${d.email}\n\n${d.message}`;
-    window.location.href = `mailto:${email}?subject=${encodeURIComponent(d.subject)}&body=${encodeURIComponent(body)}`;
-    toast.success('Opening your email app to send the message');
-    setValues(EMPTY);
+
+    if (siteKey && !captchaToken) {
+      toast.error('Please complete the security check');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('submit-contact', {
+        body: {
+          ...result.data,
+          token: captchaToken,
+          company: honeypot,
+          elapsedMs: Date.now() - mountedAt.current,
+        },
+      });
+
+      if (error) {
+        // Edge function returned a non-2xx status — surface its message.
+        let msg = 'Could not send your message. Please try again.';
+        const res = (error as { context?: Response }).context;
+        if (res && typeof res.json === 'function') {
+          const body = await res.json().catch(() => null);
+          if (body?.error) msg = body.error;
+        }
+        throw new Error(msg);
+      }
+      if (data && (data as { error?: string }).error) {
+        throw new Error((data as { error: string }).error);
+      }
+
+      toast.success('Message sent — our team will reply shortly');
+      setValues(EMPTY);
+      setCaptchaToken('');
+      setResetSignal((n) => n + 1);
+      mountedAt.current = Date.now();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not send your message');
+      setCaptchaToken('');
+      setResetSignal((n) => n + 1);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const jsonLd = {
@@ -165,11 +215,42 @@ export default function Contact() {
                     <span className="text-xs text-muted-foreground">{values.message.length}/1000</span>
                   </div>
                 </div>
-                <Button type="submit" className="gradient-primary shadow-elegant w-full sm:w-auto">Send message</Button>
+
+                {/* Honeypot — hidden from humans, tempting to bots */}
+                <div className="absolute left-[-9999px] top-auto w-px h-px overflow-hidden" aria-hidden="true">
+                  <label htmlFor="company">Company (leave blank)</label>
+                  <input
+                    id="company"
+                    name="company"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                  />
+                </div>
+
+                {siteKey ? (
+                  <Turnstile
+                    siteKey={siteKey}
+                    onVerify={setCaptchaToken}
+                    onExpire={() => setCaptchaToken('')}
+                    resetSignal={resetSignal}
+                  />
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Security check unavailable — add your Turnstile site key in Admin → Settings.
+                  </p>
+                )}
+
+                <Button type="submit" disabled={submitting} className="gradient-primary shadow-elegant w-full sm:w-auto">
+                  {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {submitting ? 'Sending…' : 'Send message'}
+                </Button>
               </form>
               <div className="mt-6 flex items-start gap-2 text-xs text-muted-foreground">
                 <Shield className="w-4 h-4 shrink-0 mt-0.5" />
-                <p>Your details are only used to answer your enquiry.</p>
+                <p>Protected by Cloudflare Turnstile. Your details are only used to answer your enquiry.</p>
               </div>
             </Card>
           </div>
