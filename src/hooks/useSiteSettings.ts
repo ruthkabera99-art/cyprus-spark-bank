@@ -26,6 +26,8 @@ export type SiteSettings = {
   hours_fri: string;
   hours_sat: string;
   hours_sun: string;
+  turnstile_site_key: string;
+
   [key: string]: string;
 };
 
