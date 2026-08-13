@@ -44,6 +44,60 @@ export type Database = {
         }
         Relationships: []
       }
+      card_requests: {
+        Row: {
+          admin_note: string | null
+          card_number: string | null
+          card_type: Database["public"]["Enums"]["card_type"]
+          cardholder_name: string
+          created_at: string
+          cvv: string | null
+          delivery_address: string | null
+          expiry_month: number | null
+          expiry_year: number | null
+          id: string
+          issued_at: string | null
+          phone: string | null
+          status: Database["public"]["Enums"]["card_request_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          card_number?: string | null
+          card_type: Database["public"]["Enums"]["card_type"]
+          cardholder_name: string
+          created_at?: string
+          cvv?: string | null
+          delivery_address?: string | null
+          expiry_month?: number | null
+          expiry_year?: number | null
+          id?: string
+          issued_at?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["card_request_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          card_number?: string | null
+          card_type?: Database["public"]["Enums"]["card_type"]
+          cardholder_name?: string
+          created_at?: string
+          cvv?: string | null
+          delivery_address?: string | null
+          expiry_month?: number | null
+          expiry_year?: number | null
+          id?: string
+          issued_at?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["card_request_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -505,6 +559,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      card_request_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "issued"
+        | "cancelled"
+      card_type: "visa" | "mastercard" | "btc"
       collateral_type:
         | "real_estate"
         | "vehicle"
@@ -646,6 +707,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      card_request_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "issued",
+        "cancelled",
+      ],
+      card_type: ["visa", "mastercard", "btc"],
       collateral_type: [
         "real_estate",
         "vehicle",
