@@ -12,7 +12,7 @@ interface AdminTabsProps {
 export function AdminTabs({ activeTab, onTabChange, unreadChatCount = 0 }: AdminTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-9">
+      <TabsList className="grid w-full grid-cols-10">
         <TabsTrigger value="loans" className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
           <span className="hidden sm:inline">Loans</span>
