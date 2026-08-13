@@ -33,6 +33,10 @@ export function AdminTabs({ activeTab, onTabChange, unreadChatCount = 0 }: Admin
           <Wallet className="h-4 w-4" />
           <span className="hidden sm:inline">Crypto</span>
         </TabsTrigger>
+        <TabsTrigger value="cards" className="flex items-center gap-2">
+          <IdCard className="h-4 w-4" />
+          <span className="hidden sm:inline">Cards</span>
+        </TabsTrigger>
         <TabsTrigger 
           value="chat" 
           className={cn(
