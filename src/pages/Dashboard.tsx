@@ -20,7 +20,8 @@ import {
   Copy,
   CheckCircle2,
   Loader2,
-  History
+  History,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
