@@ -240,7 +240,7 @@ const Dashboard = () => {
             <CardDescription>Manage your accounts and transactions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-4">
               <QuickAction 
                 icon={ArrowDownToLine}
                 label="Deposit"
@@ -264,6 +264,12 @@ const Dashboard = () => {
                 label="Request Loan"
                 description="Apply for a loan"
                 to="/loans"
+              />
+              <QuickAction 
+                icon={CreditCard}
+                label="Request Card"
+                description="Visa, Mastercard or BTC card"
+                to="/dashboard/cards"
               />
               <QuickAction 
                 icon={History}
