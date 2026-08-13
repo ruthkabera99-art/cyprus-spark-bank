@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Users, CreditCard, Wallet, History, Receipt, MessageCircle, Search, Settings } from "lucide-react";
+import { FileText, Users, CreditCard, Wallet, History, Receipt, MessageCircle, Search, Settings, IdCard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
