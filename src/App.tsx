@@ -99,6 +99,10 @@ const App = () => {
               element={<ProtectedRoute><ActivityHistory /></ProtectedRoute>} 
             />
             <Route 
+              path="/dashboard/cards" 
+              element={<ProtectedRoute><CardRequestPage /></ProtectedRoute>} 
+            />
+            <Route 
               path="/admin" 
             element={<AdminRoute><AdminDashboard /></AdminRoute>} 
             />
