@@ -110,7 +110,7 @@ export default function CardRequestPage() {
       <SEO
         title="Request a Bank Card | MorganFinance Bank"
         description="Request a Visa, Mastercard, or BTC crypto card from MorganFinance Bank and track your card issuance status."
-        noindex
+        path="/dashboard/cards"
       />
       <Header />
 
