@@ -19,6 +19,7 @@ import {
   useCancelCardRequest,
   type CardTypeEnum,
 } from '@/hooks/useCardRequests';
+import { BankCard } from '@/components/cards/BankCard';
 import {
   CARD_TYPE_LABELS,
   formatCardNumber,
@@ -248,38 +249,40 @@ export default function CardRequestPage() {
                   </div>
 
                   {isIssued && (
-                    <div className="mt-4 rounded-lg bg-muted/50 p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-lg tracking-wider text-foreground">
-                          {show ? formatCardNumber(request.card_number) : maskCardNumber(request.card_number)}
-                        </span>
+                    <div className="mt-4 flex flex-col items-center gap-3">
+                      <BankCard
+                        type={request.card_type as CardType}
+                        number={request.card_number}
+                        holder={request.cardholder_name}
+                        expiryMonth={request.expiry_month}
+                        expiryYear={request.expiry_year}
+                        cvv={request.cvv}
+                        revealed={!!show}
+                        interactive
+                      />
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-muted-foreground">Tap the card to see the back</p>
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() =>
                             setRevealed((prev) => ({ ...prev, [request.id]: !prev[request.id] }))
                           }
-                          aria-label={show ? 'Hide card number' : 'Show card number'}
                         >
-                          {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {show ? (
+                            <>
+                              <EyeOff className="w-4 h-4 mr-2" /> Hide details
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-4 h-4 mr-2" /> Reveal details
+                            </>
+                          )}
                         </Button>
-                      </div>
-                      <div className="flex gap-6 text-sm text-muted-foreground">
-                        <span>
-                          Expires{' '}
-                          <span className="text-foreground font-medium">
-                            {formatExpiry(request.expiry_month, request.expiry_year)}
-                          </span>
-                        </span>
-                        <span>
-                          CVV{' '}
-                          <span className="text-foreground font-medium font-mono">
-                            {show ? request.cvv : '•••'}
-                          </span>
-                        </span>
                       </div>
                     </div>
                   )}
+
 
                   {request.admin_note && (
                     <p className="mt-3 text-sm text-muted-foreground">

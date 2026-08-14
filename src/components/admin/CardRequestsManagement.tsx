@@ -39,6 +39,7 @@ import {
   useDeleteCardRequest,
   type AdminCardRequest,
 } from '@/hooks/useCardRequests';
+import { BankCard } from '@/components/cards/BankCard';
 import {
   CARD_TYPE_LABELS,
   formatCardNumber,
@@ -310,28 +311,24 @@ export function CardRequestsManagement() {
             </div>
 
             {preview && issuing && (
-              <div className="rounded-xl p-5 bg-gradient-to-br from-primary to-primary/60 text-primary-foreground shadow-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium uppercase tracking-wide">
-                    {CARD_TYPE_LABELS[issuing.card_type as CardType]}
-                  </span>
-                  {issuing.card_type === 'btc' ? (
-                    <Bitcoin className="h-6 w-6" />
-                  ) : (
-                    <CreditCard className="h-6 w-6" />
-                  )}
+              <div className="space-y-3">
+                <div className="flex justify-center">
+                  <BankCard
+                    type={issuing.card_type as CardType}
+                    number={preview.card_number}
+                    holder={issuing.cardholder_name}
+                    expiryMonth={preview.expiry_month}
+                    expiryYear={preview.expiry_year}
+                    cvv={preview.cvv}
+                    interactive
+                  />
                 </div>
-                <p className="font-mono text-xl tracking-widest mt-6">
-                  {formatCardNumber(preview.card_number)}
+                <p className="text-xs text-center text-muted-foreground">
+                  Tap the card to flip and check the CVV ({preview.cvv}).
                 </p>
-                <div className="flex items-end justify-between mt-4 text-sm">
-                  <span className="font-mono">{issuing.cardholder_name}</span>
-                  <span className="font-mono">
-                    {formatExpiry(preview.expiry_month, preview.expiry_year)} · CVV {preview.cvv}
-                  </span>
-                </div>
               </div>
             )}
+
 
             <Button
               variant="outline"
