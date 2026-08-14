@@ -39,6 +39,7 @@ import {
   useDeleteCardRequest,
   type AdminCardRequest,
 } from '@/hooks/useCardRequests';
+import { BankCard } from '@/components/cards/BankCard';
 import {
   CARD_TYPE_LABELS,
   formatCardNumber,
