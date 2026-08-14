@@ -159,7 +159,89 @@
     background: linear-gradient(135deg, hsl(var(--warning)) 0%, hsl(15 80% 55%) 100%);
   }
 }
+
+@layer base {
+  :root {
+    --brand-mc-red: 357 88% 55%;
+    --brand-mc-yellow: 40 96% 55%;
+    --brand-btc: 34 96% 52%;
+    --brand-btc-foreground: 220 30% 12%;
+  }
+}
+
+@layer components {
+  .card-perspective {
+    perspective: 1400px;
+  }
+
+  .card-flipper {
+    position: relative;
+    width: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+  }
+
+  .card-flipper.is-flipped {
+    transform: rotateY(180deg);
+  }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    overflow: hidden;
+  }
+
+  .card-face-back {
+    transform: rotateY(180deg);
+  }
+
+  .shadow-card-3d {
+    box-shadow:
+      0 18px 40px -12px hsl(220 40% 8% / 0.55),
+      0 2px 0 0 hsl(0 0% 100% / 0.18) inset,
+      0 -1px 0 0 hsl(0 0% 0% / 0.25) inset;
+  }
+
+  .card-shine {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(120% 90% at 12% 8%, hsl(0 0% 100% / 0.28) 0%, transparent 55%),
+      linear-gradient(115deg, transparent 40%, hsl(0 0% 100% / 0.14) 48%, transparent 56%);
+    pointer-events: none;
+  }
+
+  .card-number {
+    text-shadow: 0 1px 0 hsl(0 0% 100% / 0.35), 0 -1px 1px hsl(0 0% 0% / 0.5);
+  }
+
+  .card-chip {
+    background: linear-gradient(135deg, hsl(45 75% 78%) 0%, hsl(45 60% 55%) 45%, hsl(45 80% 85%) 100%);
+  }
+
+  .card-skin-visa {
+    background:
+      radial-gradient(90% 120% at 85% 10%, hsl(215 70% 45% / 0.9) 0%, transparent 60%),
+      linear-gradient(135deg, hsl(220 60% 22%) 0%, hsl(215 80% 35%) 55%, hsl(210 70% 28%) 100%);
+  }
+
+  .card-skin-mastercard {
+    background:
+      radial-gradient(90% 120% at 15% 15%, hsl(220 20% 35% / 0.8) 0%, transparent 60%),
+      linear-gradient(135deg, hsl(220 25% 12%) 0%, hsl(220 20% 22%) 55%, hsl(220 25% 10%) 100%);
+  }
+
+  .card-skin-btc {
+    background:
+      radial-gradient(90% 120% at 80% 15%, hsl(34 90% 50% / 0.55) 0%, transparent 60%),
+      linear-gradient(135deg, hsl(28 55% 18%) 0%, hsl(30 45% 26%) 55%, hsl(24 60% 14%) 100%);
+  }
+}
+
 @keyframes heroZoom {
   0% { transform: scale(1) translate3d(0,0,0); }
   100% { transform: scale(1.08) translate3d(-1%, -1%, 0); }
 }
+
