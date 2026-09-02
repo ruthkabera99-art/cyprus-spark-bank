@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CreditCard, Bitcoin, Sparkles, Trash2, Copy } from 'lucide-react';
+import { CreditCard, Bitcoin, Sparkles, Trash2, Copy, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import {
@@ -46,6 +46,7 @@ import {
   formatExpiry,
   generateCard,
   isValidCardNumber,
+  maskCardNumber,
   type CardType,
 } from '@/lib/cardGenerator';
 
