@@ -70,6 +70,8 @@ export function CardRequestsManagement() {
   const [term, setTerm] = useState<'3' | '5'>('3');
   const [adminNote, setAdminNote] = useState('');
   const [preview, setPreview] = useState<ReturnType<typeof generateCard> | null>(null);
+  const [printing, setPrinting] = useState<AdminCardRequest | null>(null);
+  const [printReveal, setPrintReveal] = useState(false);
 
   const filtered = useMemo(() => {
     if (!requests) return [];
@@ -267,6 +269,20 @@ export function CardRequestsManagement() {
                             <Sparkles className="h-3.5 w-3.5 mr-1" />
                             {request.card_number ? 'Re-issue' : 'Create card'}
                           </Button>
+                          {request.card_number && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="ml-1"
+                              onClick={() => {
+                                setPrinting(request);
+                                setPrintReveal(false);
+                              }}
+                              aria-label="Print card record"
+                            >
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
