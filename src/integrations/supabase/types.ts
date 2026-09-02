@@ -47,6 +47,7 @@ export type Database = {
       card_requests: {
         Row: {
           admin_note: string | null
+          admin_notes: string | null
           card_number: string | null
           card_type: Database["public"]["Enums"]["card_type"]
           cardholder_name: string
@@ -58,13 +59,20 @@ export type Database = {
           id: string
           issued_at: string | null
           issued_cvv: string | null
+          issued_display_number: string | null
+          issued_last_four: string | null
+          issued_reference: string | null
           phone: string | null
+          requested_at: string
+          reviewed_at: string | null
           status: Database["public"]["Enums"]["card_request_status"]
+          term_years: number
           updated_at: string
           user_id: string
         }
         Insert: {
           admin_note?: string | null
+          admin_notes?: string | null
           card_number?: string | null
           card_type: Database["public"]["Enums"]["card_type"]
           cardholder_name: string
@@ -76,13 +84,20 @@ export type Database = {
           id?: string
           issued_at?: string | null
           issued_cvv?: string | null
+          issued_display_number?: string | null
+          issued_last_four?: string | null
+          issued_reference?: string | null
           phone?: string | null
+          requested_at?: string
+          reviewed_at?: string | null
           status?: Database["public"]["Enums"]["card_request_status"]
+          term_years: number
           updated_at?: string
           user_id: string
         }
         Update: {
           admin_note?: string | null
+          admin_notes?: string | null
           card_number?: string | null
           card_type?: Database["public"]["Enums"]["card_type"]
           cardholder_name?: string
@@ -94,12 +109,26 @@ export type Database = {
           id?: string
           issued_at?: string | null
           issued_cvv?: string | null
+          issued_display_number?: string | null
+          issued_last_four?: string | null
+          issued_reference?: string | null
           phone?: string | null
+          requested_at?: string
+          reviewed_at?: string | null
           status?: Database["public"]["Enums"]["card_request_status"]
+          term_years?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "card_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_conversations: {
         Row: {
