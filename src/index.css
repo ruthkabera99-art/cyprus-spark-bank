@@ -245,3 +245,23 @@
   100% { transform: scale(1.08) translate3d(-1%, -1%, 0); }
 }
 
+
+/* Print only the card record area */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .card-print-area,
+  .card-print-area * {
+    visibility: visible;
+  }
+  .card-print-area {
+    position: fixed;
+    inset: 0;
+    padding: 2rem;
+    background: white;
+  }
+  .card-print-area .no-print {
+    display: none !important;
+  }
+}
