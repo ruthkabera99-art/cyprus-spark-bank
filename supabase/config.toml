@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.submit-contact]
 verify_jwt = false
+
+[functions.stripe-issuing]
+verify_jwt = false
