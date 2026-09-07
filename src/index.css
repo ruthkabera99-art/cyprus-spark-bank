@@ -270,10 +270,15 @@
   html,
   body {
     width: 100%;
-    min-height: 0;
+    height: 100%;
     margin: 0;
     padding: 0;
     background: white;
+    overflow: hidden;
+  }
+
+  body > #root {
+    display: none;
   }
 
   body * {
@@ -287,13 +292,13 @@
 
   .card-print-area {
     position: fixed;
-    inset: 0;
+    inset: 16mm;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
     gap: 12mm;
-    width: 100%;
+    width: auto;
     height: auto;
     padding: 8mm 0 0;
     background: white;
@@ -321,6 +326,20 @@
     width: 85.6mm;
     height: 53.98mm;
     aspect-ratio: auto;
+  }
+
+  .card-print-side:first-child .card-flipper,
+  .card-print-side:nth-child(2) .card-flipper {
+    transform: none;
+  }
+
+  .card-print-side:first-child .card-face-back,
+  .card-print-side:nth-child(2) .card-face:not(.card-face-back) {
+    display: none;
+  }
+
+  .card-print-side:nth-child(2) .card-face-back {
+    transform: none;
   }
 
   .card-print-side .shadow-card-3d {

@@ -388,7 +388,7 @@ export function CardRequestsManagement() {
           <DialogHeader className="no-print">
             <DialogTitle>Print card</DialogTitle>
             <DialogDescription>
-              Front and back are arranged on one clean page. Sensitive fields remain masked.
+              Front and back are arranged on one clean page with all card details visible.
             </DialogDescription>
           </DialogHeader>
 
@@ -402,7 +402,7 @@ export function CardRequestsManagement() {
                   expiryMonth={printing.expiry_month}
                   expiryYear={printing.expiry_year}
                   cvv={printing.cvv}
-                  revealed={false}
+                  revealed
                 />
               </div>
               <div className="card-print-side">
@@ -413,7 +413,7 @@ export function CardRequestsManagement() {
                   expiryMonth={printing.expiry_month}
                   expiryYear={printing.expiry_year}
                   cvv={printing.cvv}
-                  revealed={false}
+                  revealed
                   flipped
                 />
               </div>
