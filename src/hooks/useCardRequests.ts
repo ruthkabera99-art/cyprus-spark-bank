@@ -47,7 +47,7 @@ export function useCreateCardRequest() {
       if (!user) throw new Error('You must be signed in to request a card');
       const { data, error } = await supabase
         .from('card_requests')
-        .insert({ ...payload, user_id: user.id })
+        .insert({ ...payload, user_id: user.id, term_years: 3 })
         .select()
         .single();
       if (error) throw error;

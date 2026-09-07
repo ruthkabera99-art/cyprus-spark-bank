@@ -246,21 +246,87 @@
 }
 
 
-/* Print only the card record area */
+/* Clean one-page front-and-back card printout */
+.card-print-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.card-print-side {
+  width: 100%;
+  max-width: 26rem;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 16mm;
+  }
+
+  html,
+  body {
+    width: 100%;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
   body * {
     visibility: hidden;
   }
+
   .card-print-area,
   .card-print-area * {
     visibility: visible;
   }
+
   .card-print-area {
     position: fixed;
     inset: 0;
-    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12mm;
+    width: 100%;
+    height: auto;
+    padding: 8mm 0 0;
     background: white;
+    overflow: visible;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
+
+  .card-print-side {
+    width: 85.6mm;
+    max-width: 85.6mm;
+    height: 53.98mm;
+    flex: 0 0 53.98mm;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .card-print-side .card-perspective {
+    width: 85.6mm;
+    max-width: none;
+  }
+
+  .card-print-side .card-flipper {
+    width: 85.6mm;
+    height: 53.98mm;
+    aspect-ratio: auto;
+  }
+
+  .card-print-side .shadow-card-3d {
+    box-shadow: none;
+  }
+
   .card-print-area .no-print {
     display: none !important;
   }
