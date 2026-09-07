@@ -47,7 +47,6 @@ import {
   formatExpiry,
   generateCard,
   isValidCardNumber,
-  maskCardNumber,
   type CardType,
 } from '@/lib/cardGenerator';
 
@@ -72,7 +71,6 @@ export function CardRequestsManagement() {
   const [adminNote, setAdminNote] = useState('');
   const [preview, setPreview] = useState<ReturnType<typeof generateCard> | null>(null);
   const [printing, setPrinting] = useState<AdminCardRequest | null>(null);
-  const [printReveal, setPrintReveal] = useState(false);
 
   const filtered = useMemo(() => {
     if (!requests) return [];
@@ -275,10 +273,7 @@ export function CardRequestsManagement() {
                               variant="ghost"
                               size="icon"
                               className="ml-1"
-                              onClick={() => {
-                                setPrinting(request);
-                                setPrintReveal(false);
-                              }}
+                              onClick={() => setPrinting(request)}
                               aria-label="Print card record"
                             >
                               <Printer className="h-4 w-4" />
@@ -386,28 +381,20 @@ export function CardRequestsManagement() {
         onOpenChange={(open) => {
           if (!open) {
             setPrinting(null);
-            setPrintReveal(false);
           }
         }}
       >
-        <DialogContent className="card-print-area sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader className="no-print">
-            <DialogTitle>Card record</DialogTitle>
+            <DialogTitle>Print card</DialogTitle>
             <DialogDescription>
-              Print or save as PDF. Sensitive fields are masked by default.
+              Front and back are arranged on one clean page. Sensitive fields remain masked.
             </DialogDescription>
           </DialogHeader>
 
           {printing && (
-            <div className="space-y-5">
-              <div className="text-center space-y-1">
-                <p className="font-serif font-semibold">MorganFinance Bank</p>
-                <p className="text-xs text-muted-foreground uppercase tracking-[0.2em]">
-                  Card issuance record
-                </p>
-              </div>
-
-              <div className="flex justify-center">
+            <div className="card-print-area">
+              <div className="card-print-side">
                 <BankCard
                   type={printing.card_type as CardType}
                   number={printing.card_number}
@@ -415,59 +402,21 @@ export function CardRequestsManagement() {
                   expiryMonth={printing.expiry_month}
                   expiryYear={printing.expiry_year}
                   cvv={printing.cvv}
-                  revealed={printReveal}
+                  revealed={false}
                 />
               </div>
-
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm border rounded-lg p-4">
-                <dt className="text-muted-foreground">Customer</dt>
-                <dd className="font-medium">
-                  {printing.profile?.full_name || 'Unknown'}
-                </dd>
-                <dt className="text-muted-foreground">Email</dt>
-                <dd className="font-medium">{printing.profile?.email}</dd>
-                <dt className="text-muted-foreground">Card type</dt>
-                <dd className="font-medium">
-                  {CARD_TYPE_LABELS[printing.card_type as CardType]}
-                </dd>
-                <dt className="text-muted-foreground">Card number</dt>
-                <dd className="font-mono text-xs">
-                  {printReveal
-                    ? formatCardNumber(printing.card_number)
-                    : maskCardNumber(printing.card_number)}
-                </dd>
-                <dt className="text-muted-foreground">Expiry</dt>
-                <dd className="font-mono text-xs">
-                  {formatExpiry(printing.expiry_month, printing.expiry_year)}
-                </dd>
-                <dt className="text-muted-foreground">CVV</dt>
-                <dd className="font-mono text-xs">
-                  {printReveal ? printing.cvv : '•••'}
-                </dd>
-                <dt className="text-muted-foreground">Status</dt>
-                <dd className="font-medium capitalize">{printing.status}</dd>
-                <dt className="text-muted-foreground">Issued</dt>
-                <dd className="font-medium">
-                  {printing.issued_at
-                    ? format(new Date(printing.issued_at), 'MMM d, yyyy')
-                    : '—'}
-                </dd>
-              </dl>
-
-              <label className="no-print flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={printReveal}
-                  onChange={(e) => setPrintReveal(e.target.checked)}
-                  className="h-4 w-4"
+              <div className="card-print-side">
+                <BankCard
+                  type={printing.card_type as CardType}
+                  number={printing.card_number}
+                  holder={printing.cardholder_name}
+                  expiryMonth={printing.expiry_month}
+                  expiryYear={printing.expiry_year}
+                  cvv={printing.cvv}
+                  revealed={false}
+                  flipped
                 />
-                Include full card number and CVV on the printout
-              </label>
-
-              <p className="text-[10px] text-muted-foreground text-center">
-                Generated {format(new Date(), 'MMM d, yyyy HH:mm')} · Confidential — for bank
-                records only.
-              </p>
+              </div>
             </div>
           )}
 
