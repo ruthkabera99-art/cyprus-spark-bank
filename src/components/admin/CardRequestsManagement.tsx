@@ -43,12 +43,16 @@ import { useIssuingStatus, useIssueStripeCard } from '@/hooks/useStripeIssuing';
 import { BankCard } from '@/components/cards/BankCard';
 import {
   CARD_TYPE_LABELS,
+  cardProduct,
   formatCardNumber,
   formatExpiry,
   generateCard,
   isValidCardNumber,
+  matchesProgramBin,
   type CardType,
 } from '@/lib/cardGenerator';
+import { issueUniqueCard, releaseCardNumber } from '@/lib/cardIssuance';
+
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   pending: 'secondary',
