@@ -43,12 +43,16 @@ import { useIssuingStatus, useIssueStripeCard } from '@/hooks/useStripeIssuing';
 import { BankCard } from '@/components/cards/BankCard';
 import {
   CARD_TYPE_LABELS,
+  cardProduct,
   formatCardNumber,
   formatExpiry,
   generateCard,
   isValidCardNumber,
+  matchesProgramBin,
   type CardType,
 } from '@/lib/cardGenerator';
+import { issueUniqueCard, releaseCardNumber } from '@/lib/cardIssuance';
+
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   pending: 'secondary',
@@ -71,6 +75,8 @@ export function CardRequestsManagement() {
   const [adminNote, setAdminNote] = useState('');
   const [preview, setPreview] = useState<ReturnType<typeof generateCard> | null>(null);
   const [printing, setPrinting] = useState<AdminCardRequest | null>(null);
+  const [generating, setGenerating] = useState(false);
+
 
   const filtered = useMemo(() => {
     if (!requests) return [];
@@ -85,25 +91,43 @@ export function CardRequestsManagement() {
     return map;
   }, [requests]);
 
+  const buildPreview = async (type: CardType, years: 3 | 5, previous?: string | null) => {
+    setGenerating(true);
+    try {
+      releaseCardNumber(previous);
+      const card = await issueUniqueCard(type, years);
+      setPreview(card);
+    } catch (err) {
+      setPreview(null);
+      toast.error('Could not generate a card number', {
+        description: err instanceof Error ? err.message : 'Please try again.',
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const openIssue = (request: AdminCardRequest) => {
     setIssuing(request);
     setTerm('3');
     setAdminNote(request.admin_note ?? '');
-    setPreview(generateCard(request.card_type as CardType, 3));
+    setPreview(null);
+    void buildPreview(request.card_type as CardType, 3);
   };
 
   const regenerate = (years: '3' | '5') => {
     if (!issuing) return;
     setTerm(years);
-    setPreview(generateCard(issuing.card_type as CardType, Number(years) as 3 | 5));
+    void buildPreview(issuing.card_type as CardType, Number(years) as 3 | 5, preview?.card_number);
   };
 
   const confirmIssue = async () => {
     if (!issuing || !preview) return;
-    if (!isValidCardNumber(preview.card_number)) {
+    if (!isValidCardNumber(preview.card_number) || !matchesProgramBin(issuing.card_type as CardType, preview.card_number)) {
       toast.error('Generated number failed validation — please regenerate');
       return;
     }
+
     try {
       await updateRequest.mutateAsync({
         id: issuing.id,
@@ -120,10 +144,14 @@ export function CardRequestsManagement() {
       setIssuing(null);
       setPreview(null);
     } catch (err) {
-      toast.error('Could not issue card', {
-        description: err instanceof Error ? err.message : 'Please try again.',
+      const message = err instanceof Error ? err.message : 'Please try again.';
+      const duplicate = /duplicate|unique/i.test(message);
+      toast.error(duplicate ? 'That number is already issued' : 'Could not issue card', {
+        description: duplicate ? 'Generating a fresh number…' : message,
       });
+      if (duplicate) void buildPreview(issuing.card_type as CardType, Number(term) as 3 | 5, preview.card_number);
     }
+
   };
 
   const setStatus = async (request: AdminCardRequest, status: 'approved' | 'rejected') => {
@@ -339,18 +367,27 @@ export function CardRequestsManagement() {
                 <p className="text-xs text-center text-muted-foreground">
                   Tap the card to flip and check the CVV ({preview.cvv}).
                 </p>
+                <p className="text-xs text-center text-muted-foreground">
+                  {cardProduct(preview.card_number) ?? 'Card product'} · unique number, never issued before
+                </p>
               </div>
             )}
 
+            {generating && !preview && (
+              <p className="text-sm text-center text-muted-foreground">Generating a unique card number…</p>
+            )}
 
             <Button
               variant="outline"
               className="w-full"
               onClick={() => regenerate(term)}
               type="button"
+              disabled={generating}
             >
-              <Sparkles className="h-4 w-4 mr-2" /> Generate another number
+              <Sparkles className="h-4 w-4 mr-2" />
+              {generating ? 'Generating…' : 'Generate another number'}
             </Button>
+
 
             <div className="space-y-2">
               <Label htmlFor="admin-note">Note to customer (optional)</Label>
