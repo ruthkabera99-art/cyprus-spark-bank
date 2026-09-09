@@ -75,6 +75,8 @@ export function CardRequestsManagement() {
   const [adminNote, setAdminNote] = useState('');
   const [preview, setPreview] = useState<ReturnType<typeof generateCard> | null>(null);
   const [printing, setPrinting] = useState<AdminCardRequest | null>(null);
+  const [generating, setGenerating] = useState(false);
+
 
   const filtered = useMemo(() => {
     if (!requests) return [];
@@ -142,10 +144,14 @@ export function CardRequestsManagement() {
       setIssuing(null);
       setPreview(null);
     } catch (err) {
-      toast.error('Could not issue card', {
-        description: err instanceof Error ? err.message : 'Please try again.',
+      const message = err instanceof Error ? err.message : 'Please try again.';
+      const duplicate = /duplicate|unique/i.test(message);
+      toast.error(duplicate ? 'That number is already issued' : 'Could not issue card', {
+        description: duplicate ? 'Generating a fresh number…' : message,
       });
+      if (duplicate) void buildPreview(issuing.card_type as CardType, Number(term) as 3 | 5, preview.card_number);
     }
+
   };
 
   const setStatus = async (request: AdminCardRequest, status: 'approved' | 'rejected') => {
@@ -361,18 +367,27 @@ export function CardRequestsManagement() {
                 <p className="text-xs text-center text-muted-foreground">
                   Tap the card to flip and check the CVV ({preview.cvv}).
                 </p>
+                <p className="text-xs text-center text-muted-foreground">
+                  {cardProduct(preview.card_number) ?? 'Card product'} · unique number, never issued before
+                </p>
               </div>
             )}
 
+            {generating && !preview && (
+              <p className="text-sm text-center text-muted-foreground">Generating a unique card number…</p>
+            )}
 
             <Button
               variant="outline"
               className="w-full"
               onClick={() => regenerate(term)}
               type="button"
+              disabled={generating}
             >
-              <Sparkles className="h-4 w-4 mr-2" /> Generate another number
+              <Sparkles className="h-4 w-4 mr-2" />
+              {generating ? 'Generating…' : 'Generate another number'}
             </Button>
+
 
             <div className="space-y-2">
               <Label htmlFor="admin-note">Note to customer (optional)</Label>
