@@ -89,25 +89,43 @@ export function CardRequestsManagement() {
     return map;
   }, [requests]);
 
+  const buildPreview = async (type: CardType, years: 3 | 5, previous?: string | null) => {
+    setGenerating(true);
+    try {
+      releaseCardNumber(previous);
+      const card = await issueUniqueCard(type, years);
+      setPreview(card);
+    } catch (err) {
+      setPreview(null);
+      toast.error('Could not generate a card number', {
+        description: err instanceof Error ? err.message : 'Please try again.',
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const openIssue = (request: AdminCardRequest) => {
     setIssuing(request);
     setTerm('3');
     setAdminNote(request.admin_note ?? '');
-    setPreview(generateCard(request.card_type as CardType, 3));
+    setPreview(null);
+    void buildPreview(request.card_type as CardType, 3);
   };
 
   const regenerate = (years: '3' | '5') => {
     if (!issuing) return;
     setTerm(years);
-    setPreview(generateCard(issuing.card_type as CardType, Number(years) as 3 | 5));
+    void buildPreview(issuing.card_type as CardType, Number(years) as 3 | 5, preview?.card_number);
   };
 
   const confirmIssue = async () => {
     if (!issuing || !preview) return;
-    if (!isValidCardNumber(preview.card_number)) {
+    if (!isValidCardNumber(preview.card_number) || !matchesProgramBin(issuing.card_type as CardType, preview.card_number)) {
       toast.error('Generated number failed validation — please regenerate');
       return;
     }
+
     try {
       await updateRequest.mutateAsync({
         id: issuing.id,
