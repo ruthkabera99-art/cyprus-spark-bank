@@ -264,7 +264,7 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 16mm;
+    margin: 0;
   }
 
   html,
@@ -292,17 +292,20 @@
 
   .card-print-area {
     position: fixed;
-    inset: 16mm;
+    top: 18mm;
+    left: 0;
+    right: 0;
+    bottom: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    gap: 12mm;
-    width: auto;
-    height: auto;
-    padding: 8mm 0 0;
+    gap: 10mm;
+    width: 210mm;
+    height: 136mm;
+    padding: 0;
     background: white;
-    overflow: visible;
+    overflow: hidden;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -315,6 +318,7 @@
     overflow: hidden;
     break-inside: avoid;
     page-break-inside: avoid;
+    contain: layout paint;
   }
 
   .card-print-side .card-perspective {
@@ -326,6 +330,8 @@
     width: 85.6mm;
     height: 53.98mm;
     aspect-ratio: auto;
+    transform-style: flat;
+    transition: none;
   }
 
   .card-print-side:first-child .card-flipper,
@@ -342,8 +348,47 @@
     transform: none;
   }
 
+  .card-print-side .card-face {
+    width: 85.6mm;
+    height: 53.98mm;
+    border-radius: 3.18mm;
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
+  }
+
+  .card-print-side:first-child .card-face:not(.card-face-back) {
+    padding: 5mm;
+  }
+
+  .card-print-side .card-number {
+    max-width: 100%;
+    margin: 0;
+    font-size: 4.35mm;
+    line-height: 1.15;
+    letter-spacing: 0.32mm;
+    white-space: nowrap;
+    overflow: visible;
+  }
+
+  .card-print-side .card-face-back > div:first-child {
+    height: 10mm;
+    margin-top: 5mm;
+  }
+
+  .card-print-side .card-face-back > div:nth-child(2) {
+    padding: 4mm 5mm 0;
+  }
+
+  .card-print-side .card-face-back > div:last-child {
+    padding: 0 5mm 5mm;
+  }
+
   .card-print-side .shadow-card-3d {
     box-shadow: none;
+  }
+
+  .card-print-side .card-shine {
+    opacity: 0.72;
   }
 
   .card-print-area .no-print {
