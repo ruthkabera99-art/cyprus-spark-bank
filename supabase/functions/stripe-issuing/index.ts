@@ -1,7 +1,36 @@
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { corsHeaders, createClient } from 'npm:@supabase/supabase-js@2';
+import { z } from 'npm:zod@3.23.8';
 
 const STRIPE_API = 'https://api.stripe.com/v1';
+
+const RequestSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('status') }),
+  z.object({
+    action: z.literal('issue'),
+    request_id: z.string().uuid(),
+    admin_note: z.string().trim().max(1000).nullable().optional(),
+    billing: z.object({
+      city: z.string().trim().min(2).max(100),
+      state: z.string().trim().min(2).max(100),
+      postal_code: z.string().trim().min(3).max(20),
+      country: z.string().trim().length(2).transform((value) => value.toUpperCase()),
+    }),
+  }),
+  z.object({
+    action: z.literal('set_card_status'),
+    card_id: z.string().startsWith('ic_'),
+    status: z.enum(['active', 'inactive', 'canceled']),
+  }),
+]);
+
+class StripeError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -11,182 +40,197 @@ function json(body: unknown, status = 200) {
 }
 
 function form(params: Record<string, string | undefined>) {
-  const body = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') body.append(k, v);
-  return body;
+  const result = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== '') result.append(key, value);
+  }
+  return result;
 }
 
-async function stripe(path: string, key: string, init?: { method?: string; body?: URLSearchParams }) {
-  const res = await fetch(`${STRIPE_API}${path}`, {
+async function stripe(
+  path: string,
+  key: string,
+  init?: { method?: string; body?: URLSearchParams; idempotencyKey?: string },
+) {
+  const response = await fetch(`${STRIPE_API}${path}`, {
     method: init?.method ?? 'GET',
     headers: {
       Authorization: `Bearer ${key}`,
       'Content-Type': 'application/x-www-form-urlencoded',
+      ...(init?.idempotencyKey ? { 'Idempotency-Key': init.idempotencyKey } : {}),
     },
     body: init?.body,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error?.message ?? `Stripe request failed (${res.status})`);
+  const text = await response.text();
+  let data: Record<string, unknown> = {};
+  try {
+    data = JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    data = {};
+  }
+  if (!response.ok) {
+    const stripeError = data.error as { message?: string } | undefined;
+    console.error(`Stripe request failed [${response.status}]: ${text}`);
+    throw new StripeError(stripeError?.message ?? `Stripe request failed (${response.status})`, response.status);
+  }
   return data;
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   const stripeKey = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseUrl || !serviceKey) return json({ error: 'Server configuration is incomplete' }, 500);
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const action = String(body.action ?? 'status');
+    const parsed = RequestSchema.safeParse(await req.json().catch(() => ({ action: 'status' })));
+    if (!parsed.success) return json({ error: 'Invalid request', fields: parsed.error.flatten().fieldErrors }, 400);
 
-    // ---- Auth: caller must be a signed-in admin -------------------------------
     const authHeader = req.headers.get('Authorization') ?? '';
-    const token = authHeader.replace('Bearer ', '');
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
     if (!token) return json({ error: 'Unauthorized' }, 401);
 
     const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-    const { data: userData, error: userErr } = await admin.auth.getUser(token);
-    if (userErr || !userData?.user) return json({ error: 'Unauthorized' }, 401);
+    const { data: userData, error: userError } = await admin.auth.getUser(token);
+    if (userError || !userData.user) return json({ error: 'Unauthorized' }, 401);
 
-    const { data: isAdmin } = await admin.rpc('has_role', {
+    const { data: isAdmin, error: roleError } = await admin.rpc('has_role', {
       _user_id: userData.user.id,
       _role: 'admin',
     });
-    if (!isAdmin) return json({ error: 'Admin access required' }, 403);
+    if (roleError || !isAdmin) return json({ error: 'Admin access required' }, 403);
 
-    // ---- status --------------------------------------------------------------
-    if (action === 'status') {
-      if (!stripeKey) {
-        return json({ configured: false, reason: 'STRIPE_SECRET_KEY is not set' });
-      }
+    const body = parsed.data;
+    if (body.action === 'status') {
+      if (!stripeKey) return json({ configured: false, reason: 'Stripe is not connected' });
       try {
         const account = await stripe('/account', stripeKey);
-        const issuing = await stripe('/issuing/cards?limit=1', stripeKey).catch(() => null);
+        const issuing = await stripe('/issuing/cards?limit=1', stripeKey).catch((error) => {
+          if (error instanceof StripeError) return { issuingError: error.message };
+          return { issuingError: 'Stripe Issuing is unavailable' };
+        });
+        const issuingError = typeof issuing.issuingError === 'string' ? issuing.issuingError : null;
         return json({
           configured: true,
-          livemode: !stripeKey.startsWith('sk_test'),
+          livemode: !stripeKey.startsWith('sk_test_'),
           account_id: account.id,
           country: account.country,
-          issuing_enabled: !!issuing,
-          issuing_error: issuing ? null : 'Issuing is not enabled on this Stripe account yet',
+          issuing_enabled: !issuingError,
+          issuing_error: issuingError,
         });
-      } catch (e) {
-        return json({ configured: false, reason: e instanceof Error ? e.message : 'Invalid key' });
+      } catch (error) {
+        return json({ configured: false, reason: error instanceof Error ? error.message : 'Stripe key is invalid' });
       }
     }
 
-    if (!stripeKey) return json({ error: 'Stripe is not connected yet. Add STRIPE_SECRET_KEY.' }, 400);
+    if (!stripeKey) return json({ error: 'Stripe is not connected. Use the Demo card option instead.' }, 400);
 
-    // ---- issue ---------------------------------------------------------------
-    if (action === 'issue') {
-      const requestId = String(body.request_id ?? '');
-      if (!requestId) return json({ error: 'request_id is required' }, 400);
-
-      const { data: cardRequest, error: reqErr } = await admin
+    if (body.action === 'issue') {
+      const { data: cardRequest, error: requestError } = await admin
         .from('card_requests')
         .select('*')
-        .eq('id', requestId)
+        .eq('id', body.request_id)
         .maybeSingle();
-      if (reqErr || !cardRequest) return json({ error: 'Card request not found' }, 404);
+      if (requestError || !cardRequest) return json({ error: 'Card request not found' }, 404);
+      if (cardRequest.card_type === 'btc') {
+        return json({ error: 'Stripe Issuing cannot issue a BTC-network card. Use the Demo card option.' }, 400);
+      }
 
-      const { data: profile } = await admin
+      if (cardRequest.issued_reference?.startsWith('ic_')) {
+        const existing = await stripe(`/issuing/cards/${cardRequest.issued_reference}`, stripeKey);
+        return json({
+          success: true,
+          existing: true,
+          card_id: existing.id,
+          last4: existing.last4,
+          brand: existing.brand,
+          exp_month: existing.exp_month,
+          exp_year: existing.exp_year,
+        });
+      }
+
+      const { data: profile, error: profileError } = await admin
         .from('profiles')
         .select('email, phone, address, full_name')
         .eq('id', cardRequest.user_id)
         .maybeSingle();
+      if (profileError || !profile?.email) return json({ error: 'Customer email is required before live issuance' }, 400);
 
-      // 1. Cardholder
+      const line1 = cardRequest.delivery_address?.trim() || profile.address?.trim();
+      if (!line1) return json({ error: 'Customer delivery address is required before live issuance' }, 400);
+
       const cardholder = await stripe('/issuing/cardholders', stripeKey, {
         method: 'POST',
+        idempotencyKey: `cardholder-${body.request_id}`,
         body: form({
           name: cardRequest.cardholder_name,
-          email: profile?.email ?? undefined,
-          phone_number: cardRequest.phone ?? profile?.phone ?? undefined,
+          email: profile.email,
+          phone_number: cardRequest.phone ?? profile.phone ?? undefined,
           status: 'active',
           type: 'individual',
-          'billing[address][line1]':
-            cardRequest.delivery_address ?? profile?.address ?? 'Address on file',
-          'billing[address][city]': String(body.city ?? 'New York'),
-          'billing[address][state]': String(body.state ?? 'NY'),
-          'billing[address][postal_code]': String(body.postal_code ?? '10001'),
-          'billing[address][country]': String(body.country ?? 'US'),
+          'billing[address][line1]': line1,
+          'billing[address][city]': body.billing.city,
+          'billing[address][state]': body.billing.state,
+          'billing[address][postal_code]': body.billing.postal_code,
+          'billing[address][country]': body.billing.country,
+          'metadata[card_request_id]': body.request_id,
         }),
       });
 
-      // 2. Card
       const card = await stripe('/issuing/cards', stripeKey, {
         method: 'POST',
+        idempotencyKey: `card-${body.request_id}`,
         body: form({
-          cardholder: cardholder.id,
-          currency: String(body.currency ?? 'usd'),
-          type: String(body.card_form ?? 'virtual'),
+          cardholder: String(cardholder.id),
+          currency: 'usd',
+          type: 'virtual',
           status: 'active',
-          'metadata[card_request_id]': requestId,
-          'metadata[brand_requested]': cardRequest.card_type,
+          'metadata[card_request_id]': body.request_id,
+          'metadata[requested_design]': cardRequest.card_type,
         }),
       });
 
-      // 3. Sensitive details (requires the card to be virtual)
-      let number: string | null = null;
-      let cvc: string | null = null;
-      try {
-        const full = await stripe(
-          `/issuing/cards/${card.id}?expand[]=number&expand[]=cvc`,
-          stripeKey,
-        );
-        number = full.number ?? null;
-        cvc = full.cvc ?? null;
-      } catch {
-        // Account may not be permitted to read PANs via API — keep last4 only.
-      }
-
-      const { error: updErr } = await admin
+      const last4 = String(card.last4 ?? '');
+      const { error: updateError } = await admin
         .from('card_requests')
         .update({
           status: 'issued',
           issued_at: new Date().toISOString(),
-          card_number: number,
-          cvv: cvc,
-          expiry_month: card.exp_month,
-          expiry_year: card.exp_year,
-          issued_reference: card.id,
-          issued_last_four: card.last4,
-          issued_display_number: `•••• •••• •••• ${card.last4}`,
-          admin_note: body.admin_note ? String(body.admin_note) : cardRequest.admin_note,
+          card_number: null,
+          cvv: null,
+          issued_cvv: null,
+          expiry_month: Number(card.exp_month),
+          expiry_year: Number(card.exp_year),
+          issued_reference: String(card.id),
+          issued_last_four: last4,
+          issued_display_number: `•••• •••• •••• ${last4}`,
+          admin_note: body.admin_note || cardRequest.admin_note,
         })
-        .eq('id', requestId);
-      if (updErr) throw updErr;
+        .eq('id', body.request_id);
+      if (updateError) throw updateError;
 
       return json({
         success: true,
+        existing: false,
         card_id: card.id,
-        last4: card.last4,
+        last4,
         brand: card.brand,
         exp_month: card.exp_month,
         exp_year: card.exp_year,
-        pan_available: !!number,
       });
     }
 
-    // ---- freeze / unfreeze / cancel -------------------------------------------
-    if (action === 'set_card_status') {
-      const cardId = String(body.card_id ?? '');
-      const status = String(body.status ?? '');
-      if (!cardId || !['active', 'inactive', 'canceled'].includes(status)) {
-        return json({ error: 'card_id and a valid status are required' }, 400);
-      }
-      const card = await stripe(`/issuing/cards/${cardId}`, stripeKey, {
-        method: 'POST',
-        body: form({ status }),
-      });
-      return json({ success: true, status: card.status });
-    }
-
-    return json({ error: `Unknown action: ${action}` }, 400);
-  } catch (e) {
-    console.error('stripe-issuing error', e);
-    return json({ error: e instanceof Error ? e.message : 'Unexpected error' }, 500);
+    const card = await stripe(`/issuing/cards/${body.card_id}`, stripeKey, {
+      method: 'POST',
+      body: form({ status: body.status }),
+    });
+    return json({ success: true, status: card.status });
+  } catch (error) {
+    console.error('stripe-issuing error', error);
+    const status = error instanceof StripeError ? error.status : 500;
+    return json({ error: error instanceof Error ? error.message : 'Unexpected error' }, status);
   }
 });
