@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface IssuingStatus {
@@ -13,7 +14,13 @@ export interface IssuingStatus {
 
 async function invoke<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke('stripe-issuing', { body });
-  if (error) throw error;
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const response = await error.context.json().catch(() => null) as { error?: string } | null;
+      throw new Error(response?.error ?? error.message);
+    }
+    throw error;
+  }
   if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
   return data as T;
 }
@@ -32,8 +39,20 @@ export function useIssuingStatus() {
 export function useIssueStripeCard() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { request_id: string; admin_note?: string | null }) =>
-      invoke<{ success: boolean; last4: string; brand: string; pan_available: boolean }>({
+    mutationFn: (payload: {
+      request_id: string;
+      admin_note?: string | null;
+      billing: { city: string; state: string; postal_code: string; country: string };
+    }) =>
+      invoke<{
+        success: boolean;
+        existing: boolean;
+        card_id: string;
+        last4: string;
+        brand: string;
+        exp_month: number;
+        exp_year: number;
+      }>({
         action: 'issue',
         ...payload,
       }),
