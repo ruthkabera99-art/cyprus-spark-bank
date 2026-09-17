@@ -21,6 +21,10 @@ const RequestSchema = z.discriminatedUnion('action', [
     card_id: z.string().startsWith('ic_'),
     status: z.enum(['active', 'inactive', 'canceled']),
   }),
+  z.object({
+    action: z.literal('usage'),
+    card_id: z.string().startsWith('ic_'),
+  }),
 ]);
 
 class StripeError extends Error {
@@ -127,6 +131,43 @@ Deno.serve(async (req) => {
     }
 
     if (!stripeKey) return json({ error: 'Stripe is not connected. Use the Demo card option instead.' }, 400);
+
+    if (body.action === 'usage') {
+      const card = await stripe(`/issuing/cards/${body.card_id}`, stripeKey);
+      const requestId = (card.metadata as Record<string, string> | undefined)?.card_request_id;
+      if (!requestId) return json({ error: 'This Stripe card is not linked to a card request' }, 400);
+
+      const { data: ownedRequest } = await admin
+        .from('card_requests')
+        .select('id')
+        .eq('id', requestId)
+        .eq('issued_reference', body.card_id)
+        .maybeSingle();
+      if (!ownedRequest) return json({ error: 'Card request link could not be verified' }, 403);
+
+      const transactions = await stripe(
+        `/issuing/transactions?card=${encodeURIComponent(body.card_id)}&limit=100`,
+        stripeKey,
+      );
+      const rows = Array.isArray(transactions.data) ? transactions.data : [];
+      return json({
+        card_id: body.card_id,
+        transactions: rows.map((item) => {
+          const transaction = item as Record<string, unknown>;
+          const merchant = transaction.merchant_data as Record<string, unknown> | undefined;
+          return {
+            id: String(transaction.id ?? ''),
+            amount: Number(transaction.amount ?? 0),
+            currency: String(transaction.currency ?? 'usd'),
+            created: Number(transaction.created ?? 0),
+            type: String(transaction.type ?? 'capture'),
+            merchant_name: String(merchant?.name ?? 'Card purchase'),
+            merchant_city: merchant?.city ? String(merchant.city) : null,
+            merchant_country: merchant?.country ? String(merchant.country) : null,
+          };
+        }),
+      });
+    }
 
     if (body.action === 'issue') {
       const { data: cardRequest, error: requestError } = await admin

@@ -12,6 +12,17 @@ export interface IssuingStatus {
   issuing_error?: string | null;
 }
 
+export interface CardUsageTransaction {
+  id: string;
+  amount: number;
+  currency: string;
+  created: number;
+  type: string;
+  merchant_name: string;
+  merchant_city: string | null;
+  merchant_country: string | null;
+}
+
 async function invoke<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke('stripe-issuing', { body });
   if (error) {
@@ -59,6 +70,20 @@ export function useIssueStripeCard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['card-requests'] });
     },
+  });
+}
+
+/** Load settled Stripe Issuing transactions for one issued card. */
+export function useStripeCardUsage(cardId: string | null) {
+  return useQuery({
+    queryKey: ['stripe-issuing', 'usage', cardId],
+    queryFn: () => invoke<{ card_id: string; transactions: CardUsageTransaction[] }>({
+      action: 'usage',
+      card_id: cardId,
+    }),
+    enabled: Boolean(cardId?.startsWith('ic_')),
+    staleTime: 30_000,
+    retry: false,
   });
 }
 
