@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CreditCard, Bitcoin, Sparkles, Trash2, Copy, Printer, AlertTriangle, CheckCircle2, Clock3, XCircle } from 'lucide-react';
+import { CreditCard, Bitcoin, Sparkles, Trash2, Copy, Printer, AlertTriangle, CheckCircle2, Clock3, XCircle, Wifi, WifiOff, ReceiptText } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import {
@@ -39,7 +39,7 @@ import {
   useDeleteCardRequest,
   type AdminCardRequest,
 } from '@/hooks/useCardRequests';
-import { useIssuingStatus, useIssueStripeCard } from '@/hooks/useStripeIssuing';
+import { useIssuingStatus, useIssueStripeCard, useStripeCardUsage } from '@/hooks/useStripeIssuing';
 import { BankCard } from '@/components/cards/BankCard';
 import {
   CARD_TYPE_LABELS,
@@ -65,6 +65,7 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | '
 const TYPES: CardType[] = ['visa', 'mastercard', 'btc'];
 
 type FollowUpStatus = 'all' | 'pending' | 'approved' | 'issued' | 'rejected';
+type IssuanceMode = 'live' | 'demo';
 
 const REJECTION_CATEGORIES = {
   misinformation: 'Incorrect or misleading information',
@@ -90,6 +91,15 @@ export function CardRequestsManagement() {
   const [preview, setPreview] = useState<ReturnType<typeof generateCard> | null>(null);
   const [printing, setPrinting] = useState<AdminCardRequest | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [issuanceMode, setIssuanceMode] = useState<IssuanceMode>('demo');
+  const [billingCity, setBillingCity] = useState('');
+  const [billingState, setBillingState] = useState('');
+  const [billingPostalCode, setBillingPostalCode] = useState('');
+  const [billingCountry, setBillingCountry] = useState('US');
+  const [usageCard, setUsageCard] = useState<AdminCardRequest | null>(null);
+  const issuingStatus = useIssuingStatus();
+  const issueStripeCard = useIssueStripeCard();
+  const usage = useStripeCardUsage(usageCard?.issued_reference ?? null);
 
 
   const filtered = useMemo(() => {
@@ -134,11 +144,25 @@ export function CardRequestsManagement() {
   };
 
   const openIssue = (request: AdminCardRequest) => {
+    const canIssueLive = Boolean(
+      issuingStatus.data?.configured && issuingStatus.data.issuing_enabled && request.card_type !== 'btc',
+    );
     setIssuing(request);
+    setIssuanceMode(canIssueLive ? 'live' : 'demo');
     setTerm('3');
     setAdminNote(request.admin_note ?? '');
     setPreview(null);
-    void buildPreview(request.card_type as CardType, 3);
+    setBillingCity('');
+    setBillingState('');
+    setBillingPostalCode('');
+    setBillingCountry('US');
+    if (!canIssueLive) void buildPreview(request.card_type as CardType, 3);
+  };
+
+  const changeIssuanceMode = (mode: IssuanceMode) => {
+    if (!issuing) return;
+    setIssuanceMode(mode);
+    if (mode === 'demo' && !preview) void buildPreview(issuing.card_type as CardType, Number(term) as 3 | 5);
   };
 
   const regenerate = (years: '3' | '5') => {
@@ -148,7 +172,36 @@ export function CardRequestsManagement() {
   };
 
   const confirmIssue = async () => {
-    if (!issuing || !preview) return;
+    if (!issuing) return;
+    if (issuanceMode === 'live') {
+      if (!billingCity.trim() || !billingState.trim() || !billingPostalCode.trim() || billingCountry.trim().length !== 2) {
+        toast.error('Complete the cardholder billing address');
+        return;
+      }
+      try {
+        const result = await issueStripeCard.mutateAsync({
+          request_id: issuing.id,
+          admin_note: adminNote.trim() || null,
+          billing: {
+            city: billingCity.trim(),
+            state: billingState.trim(),
+            postal_code: billingPostalCode.trim(),
+            country: billingCountry.trim().toUpperCase(),
+          },
+        });
+        toast.success(result.existing ? 'Stripe card already issued' : 'Live Stripe card issued', {
+          description: `Card ending ${result.last4}`,
+        });
+        setIssuing(null);
+      } catch (err) {
+        toast.error('Could not issue live card', {
+          description: err instanceof Error ? err.message : 'Please check the Stripe account and customer details.',
+        });
+      }
+      return;
+    }
+
+    if (!preview) return;
     if (!isValidCardNumber(preview.card_number) || !matchesProgramBin(issuing.card_type as CardType, preview.card_number)) {
       toast.error('Generated number failed validation — please regenerate');
       return;
@@ -255,6 +308,30 @@ export function CardRequestsManagement() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-5 flex flex-col gap-3 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            {issuingStatus.isLoading ? (
+              <Skeleton className="h-9 w-9 rounded-full" />
+            ) : issuingStatus.data?.configured && issuingStatus.data.issuing_enabled ? (
+              <Wifi className="h-5 w-5 text-primary" aria-hidden="true" />
+            ) : (
+              <WifiOff className="h-5 w-5 text-destructive" aria-hidden="true" />
+            )}
+            <div>
+              <p className="text-sm font-medium">
+                {issuingStatus.data?.configured && issuingStatus.data.issuing_enabled
+                  ? `Stripe Issuing connected · ${issuingStatus.data.livemode ? 'Live mode' : 'Test mode'}`
+                  : 'Stripe Issuing not connected'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {issuingStatus.data?.issuing_error || issuingStatus.data?.reason || 'Live cards use a verified Stripe cardholder account.'}
+              </p>
+            </div>
+          </div>
+          {issuingStatus.data?.account_id && (
+            <Badge variant="outline">Account {issuingStatus.data.account_id}</Badge>
+          )}
+        </div>
         <Tabs value={tab} onValueChange={(v) => setTab(v as 'all' | CardType)}>
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
@@ -355,7 +432,12 @@ export function CardRequestsManagement() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {request.card_number ? (
+                          {request.issued_reference?.startsWith('ic_') ? (
+                            <div>
+                              <div className="font-mono text-xs">{request.issued_display_number || `•••• ${request.issued_last_four}`}</div>
+                              <div className="text-xs text-muted-foreground">Live Stripe card</div>
+                            </div>
+                          ) : request.card_number ? (
                             <button
                               type="button"
                               onClick={() => copy(request.card_number!)}
@@ -413,6 +495,17 @@ export function CardRequestsManagement() {
                               aria-label="Print card record"
                             >
                               <Printer className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {request.issued_reference?.startsWith('ic_') && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="ml-1"
+                              onClick={() => setUsageCard(request)}
+                              aria-label="View card usage history"
+                            >
+                              <ReceiptText className="h-4 w-4" />
                             </Button>
                           )}
                           <Button
@@ -482,7 +575,7 @@ export function CardRequestsManagement() {
       <Dialog open={!!issuing} onOpenChange={(open) => !open && setIssuing(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create card</DialogTitle>
+            <DialogTitle>Issue card</DialogTitle>
             <DialogDescription>
               {issuing &&
                 `${CARD_TYPE_LABELS[issuing.card_type as CardType]} for ${issuing.cardholder_name}`}
@@ -490,6 +583,46 @@ export function CardRequestsManagement() {
           </DialogHeader>
 
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2" role="group" aria-label="Issuance type">
+              <Button
+                type="button"
+                variant={issuanceMode === 'live' ? 'default' : 'outline'}
+                onClick={() => changeIssuanceMode('live')}
+                disabled={!issuingStatus.data?.configured || !issuingStatus.data.issuing_enabled || issuing?.card_type === 'btc'}
+              >
+                Live Stripe card
+              </Button>
+              <Button
+                type="button"
+                variant={issuanceMode === 'demo' ? 'default' : 'outline'}
+                onClick={() => changeIssuanceMode('demo')}
+              >
+                Demo card
+              </Button>
+            </div>
+
+            {issuanceMode === 'live' ? (
+              <div className="space-y-4">
+                <div className="border-l-2 border-primary pl-3">
+                  <p className="text-sm font-medium">Real Stripe cardholder account</p>
+                  <p className="text-xs text-muted-foreground">The customer name, email, phone, and street address come from their request and profile.</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2"><Label htmlFor="billing-city">City</Label><Input id="billing-city" value={billingCity} onChange={(event) => setBillingCity(event.target.value)} /></div>
+                  <div className="space-y-2"><Label htmlFor="billing-state">State / province</Label><Input id="billing-state" value={billingState} onChange={(event) => setBillingState(event.target.value)} /></div>
+                  <div className="space-y-2"><Label htmlFor="billing-postal">Postal code</Label><Input id="billing-postal" value={billingPostalCode} onChange={(event) => setBillingPostalCode(event.target.value)} /></div>
+                  <div className="space-y-2"><Label htmlFor="billing-country">Country code</Label><Input id="billing-country" value={billingCountry} maxLength={2} onChange={(event) => setBillingCountry(event.target.value.toUpperCase())} /></div>
+                </div>
+              </div>
+            ) : (
+              <div className="border-l-2 border-muted-foreground pl-3">
+                <p className="text-sm font-medium">Non-spendable demonstration card</p>
+                <p className="text-xs text-muted-foreground">For previews and testing only. It is not connected to a payment network.</p>
+              </div>
+            )}
+
+            {issuanceMode === 'demo' && (
+              <>
             <div className="space-y-2">
               <Label>Validity</Label>
               <Select value={term} onValueChange={(v) => regenerate(v as '3' | '5')}>
@@ -539,6 +672,8 @@ export function CardRequestsManagement() {
               <Sparkles className="h-4 w-4 mr-2" />
               {generating ? 'Generating…' : 'Generate another number'}
             </Button>
+              </>
+            )}
 
 
             <div className="space-y-2">
@@ -557,10 +692,51 @@ export function CardRequestsManagement() {
             <Button variant="outline" onClick={() => setIssuing(null)}>
               Cancel
             </Button>
-            <Button onClick={confirmIssue} disabled={updateRequest.isPending}>
-              {updateRequest.isPending ? 'Issuing…' : 'Issue card'}
+            <Button onClick={confirmIssue} disabled={updateRequest.isPending || issueStripeCard.isPending || (issuanceMode === 'demo' && !preview)}>
+              {updateRequest.isPending || issueStripeCard.isPending
+                ? 'Issuing…'
+                : issuanceMode === 'live'
+                  ? 'Issue live Stripe card'
+                  : 'Issue demo card'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!usageCard} onOpenChange={(open) => !open && setUsageCard(null)}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Card usage history</DialogTitle>
+            <DialogDescription>
+              {usageCard ? `${usageCard.cardholder_name} · card ending ${usageCard.issued_last_four}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          {usage.isLoading ? (
+            <Skeleton className="h-32 w-full" />
+          ) : usage.isError ? (
+            <div className="border-l-2 border-destructive pl-3 text-sm text-destructive">
+              {usage.error instanceof Error ? usage.error.message : 'Could not load card usage.'}
+            </div>
+          ) : usage.data?.transactions.length ? (
+            <div className="max-h-96 overflow-auto">
+              <Table>
+                <TableHeader><TableRow><TableHead>Merchant</TableHead><TableHead>When</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {usage.data.transactions.map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell><div className="font-medium">{transaction.merchant_name}</div><div className="text-xs text-muted-foreground">{[transaction.merchant_city, transaction.merchant_country].filter(Boolean).join(', ')}</div></TableCell>
+                      <TableCell className="text-xs">{format(new Date(transaction.created * 1000), 'MMM d, yyyy · h:mm a')}</TableCell>
+                      <TableCell><Badge variant="outline">{transaction.type}</Badge></TableCell>
+                      <TableCell className="text-right font-mono">{new Intl.NumberFormat(undefined, { style: 'currency', currency: transaction.currency.toUpperCase() }).format(Math.abs(transaction.amount) / 100)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">This issued card has no completed usage yet.</p>
+          )}
+          <DialogFooter><Button variant="outline" onClick={() => setUsageCard(null)}>Close</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
