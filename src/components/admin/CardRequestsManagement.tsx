@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CreditCard, Bitcoin, Sparkles, Trash2, Copy, Printer, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { CreditCard, Bitcoin, Sparkles, Trash2, Copy, Printer, AlertTriangle, CheckCircle2, Clock3, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import {
@@ -64,13 +64,27 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | '
 
 const TYPES: CardType[] = ['visa', 'mastercard', 'btc'];
 
+type FollowUpStatus = 'all' | 'pending' | 'approved' | 'issued' | 'rejected';
+
+const REJECTION_CATEGORIES = {
+  misinformation: 'Incorrect or misleading information',
+  incomplete_documents: 'Incomplete information or documents',
+  identity_verification: 'Identity verification unsuccessful',
+  duplicate_request: 'Duplicate card request',
+  other: 'Other reason',
+} as const;
+
 export function CardRequestsManagement() {
   const { data: requests, isLoading } = useAdminCardRequests();
   const updateRequest = useUpdateCardRequest();
   const deleteRequest = useDeleteCardRequest();
 
   const [tab, setTab] = useState<'all' | CardType>('all');
+  const [statusFilter, setStatusFilter] = useState<FollowUpStatus>('all');
   const [issuing, setIssuing] = useState<AdminCardRequest | null>(null);
+  const [rejecting, setRejecting] = useState<AdminCardRequest | null>(null);
+  const [rejectionCategory, setRejectionCategory] = useState<keyof typeof REJECTION_CATEGORIES>('misinformation');
+  const [rejectionReason, setRejectionReason] = useState('');
   const [term, setTerm] = useState<'3' | '5'>('3');
   const [adminNote, setAdminNote] = useState('');
   const [preview, setPreview] = useState<ReturnType<typeof generateCard> | null>(null);
@@ -80,8 +94,12 @@ export function CardRequestsManagement() {
 
   const filtered = useMemo(() => {
     if (!requests) return [];
-    return tab === 'all' ? requests : requests.filter((r) => r.card_type === tab);
-  }, [requests, tab]);
+    return requests.filter((request) => {
+      const matchesType = tab === 'all' || request.card_type === tab;
+      const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
+      return matchesType && matchesStatus;
+    });
+  }, [requests, tab, statusFilter]);
 
   const counts = useMemo(() => {
     const map: Record<string, number> = { all: requests?.length ?? 0 };
@@ -90,6 +108,14 @@ export function CardRequestsManagement() {
     });
     return map;
   }, [requests]);
+
+  const statusCounts = useMemo(() => ({
+    all: requests?.length ?? 0,
+    pending: requests?.filter((request) => request.status === 'pending').length ?? 0,
+    approved: requests?.filter((request) => request.status === 'approved').length ?? 0,
+    issued: requests?.filter((request) => request.status === 'issued').length ?? 0,
+    rejected: requests?.filter((request) => request.status === 'rejected').length ?? 0,
+  }), [requests]);
 
   const buildPreview = async (type: CardType, years: 3 | 5, previous?: string | null) => {
     setGenerating(true);
@@ -154,12 +180,52 @@ export function CardRequestsManagement() {
 
   };
 
-  const setStatus = async (request: AdminCardRequest, status: 'approved' | 'rejected') => {
+  const approveRequest = async (request: AdminCardRequest) => {
     try {
-      await updateRequest.mutateAsync({ id: request.id, updates: { status } });
-      toast.success(`Request ${status}`);
+      await updateRequest.mutateAsync({
+        id: request.id,
+        updates: {
+          status: 'approved',
+          reviewed_at: new Date().toISOString(),
+          rejection_category: null,
+          rejection_reason: null,
+        },
+      });
+      toast.success('Request approved');
     } catch {
       toast.error('Could not update request');
+    }
+  };
+
+  const openReject = (request: AdminCardRequest) => {
+    setRejecting(request);
+    setRejectionCategory('misinformation');
+    setRejectionReason('');
+  };
+
+  const confirmReject = async () => {
+    if (!rejecting) return;
+    const reason = rejectionReason.trim();
+    if (reason.length < 10) {
+      toast.error('Please provide a clear explanation of at least 10 characters');
+      return;
+    }
+    try {
+      await updateRequest.mutateAsync({
+        id: rejecting.id,
+        updates: {
+          status: 'rejected',
+          reviewed_at: new Date().toISOString(),
+          rejection_category: rejectionCategory,
+          rejection_reason: reason,
+          admin_note: reason,
+        },
+      });
+      toast.success('Request rejected', { description: 'The rejection reason is now visible to the customer.' });
+      setRejecting(null);
+      setRejectionReason('');
+    } catch {
+      toast.error('Could not reject request');
     }
   };
 
@@ -185,8 +251,7 @@ export function CardRequestsManagement() {
           Card Requests
         </CardTitle>
         <CardDescription>
-          Review customer card requests and issue Visa, Mastercard, or BTC cards with generated
-          numbers, expiry dates, and CVVs.
+          Follow each request from review through approval, rejection, and card issuance.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -199,6 +264,27 @@ export function CardRequestsManagement() {
               <Bitcoin className="h-3.5 w-3.5" /> BTC ({counts.btc})
             </TabsTrigger>
           </TabsList>
+
+          <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Card request status summary">
+            {([
+              ['all', 'All requests', CreditCard],
+              ['pending', 'Pending', Clock3],
+              ['approved', 'Approved', CheckCircle2],
+              ['issued', 'Issued', Sparkles],
+              ['rejected', 'Rejected', XCircle],
+            ] as const).map(([value, label, Icon]) => (
+              <Button
+                key={value}
+                type="button"
+                variant={statusFilter === value ? 'default' : 'outline'}
+                className="h-auto justify-between px-3 py-3"
+                onClick={() => setStatusFilter(value)}
+              >
+                <span className="flex items-center gap-2 text-xs"><Icon className="h-4 w-4" />{label}</span>
+                <span className="text-base font-semibold">{statusCounts[value]}</span>
+              </Button>
+            ))}
+          </div>
 
           <TabsContent value={tab} className="mt-0">
             {isLoading ? (
@@ -249,9 +335,24 @@ export function CardRequestsManagement() {
                           {format(new Date(request.created_at), 'MMM d, yyyy')}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={STATUS_VARIANT[request.status] ?? 'secondary'}>
-                            {request.status}
-                          </Badge>
+                          <div className="space-y-1">
+                            <Badge variant={STATUS_VARIANT[request.status] ?? 'secondary'}>
+                              {request.status}
+                            </Badge>
+                            {request.reviewed_at && (
+                              <p className="text-[11px] text-muted-foreground">
+                                Reviewed {format(new Date(request.reviewed_at), 'MMM d, yyyy')}
+                              </p>
+                            )}
+                            {request.status === 'rejected' && request.rejection_reason && (
+                              <p className="max-w-56 text-xs text-destructive">
+                                {request.rejection_category && REJECTION_CATEGORIES[request.rejection_category as keyof typeof REJECTION_CATEGORIES]
+                                  ? `${REJECTION_CATEGORIES[request.rejection_category as keyof typeof REJECTION_CATEGORIES]}: `
+                                  : ''}
+                                {request.rejection_reason}
+                              </p>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           {request.card_number ? (
@@ -279,23 +380,30 @@ export function CardRequestsManagement() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setStatus(request, 'approved')}
+                                onClick={() => approveRequest(request)}
                               >
                                 Approve
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setStatus(request, 'rejected')}
+                                onClick={() => openReject(request)}
                               >
                                 Reject
                               </Button>
                             </>
                           )}
-                          <Button size="sm" className="ml-1" onClick={() => openIssue(request)}>
-                            <Sparkles className="h-3.5 w-3.5 mr-1" />
-                            {request.card_number ? 'Re-issue' : 'Create card'}
-                          </Button>
+                          {request.status === 'rejected' && (
+                            <Button variant="ghost" size="sm" onClick={() => approveRequest(request)}>
+                              Reopen & approve
+                            </Button>
+                          )}
+                          {!['rejected', 'cancelled'].includes(request.status) && (
+                            <Button size="sm" className="ml-1" onClick={() => openIssue(request)}>
+                              <Sparkles className="h-3.5 w-3.5 mr-1" />
+                              {request.card_number ? 'Re-issue' : 'Create card'}
+                            </Button>
+                          )}
                           {request.card_number && (
                             <Button
                               variant="ghost"
@@ -326,6 +434,50 @@ export function CardRequestsManagement() {
           </TabsContent>
         </Tabs>
       </CardContent>
+
+      <Dialog open={!!rejecting} onOpenChange={(open) => !open && setRejecting(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" /> Reject card request
+            </DialogTitle>
+            <DialogDescription>
+              {rejecting ? `Explain why ${rejecting.cardholder_name}'s request cannot be approved.` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="rejection-category">Reason category</Label>
+              <Select value={rejectionCategory} onValueChange={(value) => setRejectionCategory(value as keyof typeof REJECTION_CATEGORIES)}>
+                <SelectTrigger id="rejection-category"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(REJECTION_CATEGORIES).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rejection-reason">Explanation shown to customer</Label>
+              <Textarea
+                id="rejection-reason"
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                rows={4}
+                maxLength={500}
+                placeholder="Explain which information is incorrect and what the customer should correct before submitting again."
+              />
+              <p className="text-xs text-muted-foreground">{rejectionReason.length}/500 characters</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejecting(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmReject} disabled={updateRequest.isPending}>
+              {updateRequest.isPending ? 'Rejecting…' : 'Reject request'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!issuing} onOpenChange={(open) => !open && setIssuing(null)}>
         <DialogContent>
