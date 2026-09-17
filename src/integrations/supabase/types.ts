@@ -63,6 +63,8 @@ export type Database = {
           issued_last_four: string | null
           issued_reference: string | null
           phone: string | null
+          rejection_category: string | null
+          rejection_reason: string | null
           requested_at: string
           reviewed_at: string | null
           status: Database["public"]["Enums"]["card_request_status"]
@@ -88,6 +90,8 @@ export type Database = {
           issued_last_four?: string | null
           issued_reference?: string | null
           phone?: string | null
+          rejection_category?: string | null
+          rejection_reason?: string | null
           requested_at?: string
           reviewed_at?: string | null
           status?: Database["public"]["Enums"]["card_request_status"]
@@ -113,6 +117,8 @@ export type Database = {
           issued_last_four?: string | null
           issued_reference?: string | null
           phone?: string | null
+          rejection_category?: string | null
+          rejection_reason?: string | null
           requested_at?: string
           reviewed_at?: string | null
           status?: Database["public"]["Enums"]["card_request_status"]

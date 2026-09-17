@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CreditCard, Bitcoin, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { CreditCard, Bitcoin, Eye, EyeOff, Trash2, AlertTriangle, CheckCircle2, Clock3, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
@@ -55,6 +55,22 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | '
   issued: 'default',
   rejected: 'destructive',
   cancelled: 'outline',
+};
+
+const STATUS_COPY: Record<string, { title: string; detail: string; icon: typeof Clock3 }> = {
+  pending: { title: 'Pending review', detail: 'Your request is waiting for review.', icon: Clock3 },
+  approved: { title: 'Approved', detail: 'Your request is approved and waiting for card issuance.', icon: CheckCircle2 },
+  issued: { title: 'Card issued', detail: 'Your card has been created and is ready below.', icon: Sparkles },
+  rejected: { title: 'Request rejected', detail: 'Review the reason below before submitting corrected information.', icon: AlertTriangle },
+  cancelled: { title: 'Cancelled', detail: 'This request was cancelled.', icon: Trash2 },
+};
+
+const REJECTION_LABELS: Record<string, string> = {
+  misinformation: 'Incorrect or misleading information',
+  incomplete_documents: 'Incomplete information or documents',
+  identity_verification: 'Identity verification unsuccessful',
+  duplicate_request: 'Duplicate card request',
+  other: 'Other reason',
 };
 
 export default function CardRequestPage() {
@@ -211,8 +227,10 @@ export default function CardRequestPage() {
               <p className="text-muted-foreground text-sm">You have no card requests yet.</p>
             )}
             {requests?.map((request) => {
-              const isIssued = !!request.card_number;
+              const isIssued = request.status === 'issued' && (!!request.card_number || !!request.issued_last_four);
               const show = revealed[request.id];
+              const statusInfo = STATUS_COPY[request.status] ?? STATUS_COPY.pending;
+              const StatusIcon = statusInfo.icon;
               return (
                 <div key={request.id} className="rounded-xl border border-border p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -247,6 +265,28 @@ export default function CardRequestPage() {
                       )}
                     </div>
                   </div>
+
+                  <div className="mt-4 flex gap-3 rounded-md border border-border bg-muted/40 p-3">
+                    <StatusIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{statusInfo.title}</p>
+                      <p className="text-xs text-muted-foreground">{statusInfo.detail}</p>
+                      {request.reviewed_at && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Reviewed {new Date(request.reviewed_at).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {request.status === 'rejected' && request.rejection_reason && (
+                    <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                      <p className="text-sm font-semibold text-destructive">
+                        {REJECTION_LABELS[request.rejection_category ?? ''] ?? 'Reason for rejection'}
+                      </p>
+                      <p className="mt-1 text-sm text-foreground">{request.rejection_reason}</p>
+                    </div>
+                  )}
 
                   {isIssued && (
                     <div className="mt-4 flex flex-col items-center gap-3">
@@ -284,7 +324,7 @@ export default function CardRequestPage() {
                   )}
 
 
-                  {request.admin_note && (
+                  {request.admin_note && request.status !== 'rejected' && (
                     <p className="mt-3 text-sm text-muted-foreground">
                       Note from bank: {request.admin_note}
                     </p>
