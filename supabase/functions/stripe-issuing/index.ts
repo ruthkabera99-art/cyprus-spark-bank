@@ -25,6 +25,13 @@ const RequestSchema = z.discriminatedUnion('action', [
     action: z.literal('usage'),
     card_id: z.string().startsWith('ic_'),
   }),
+  z.object({ action: z.literal('balances') }),
+  z.object({
+    action: z.literal('set_spending_limit'),
+    card_id: z.string().startsWith('ic_'),
+    amount: z.number().int().min(0).max(100_000_000),
+    interval: z.enum(['per_authorization', 'daily', 'weekly', 'monthly', 'yearly', 'all_time']),
+  }),
 ]);
 
 class StripeError extends Error {
