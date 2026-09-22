@@ -87,6 +87,52 @@ export function useStripeCardUsage(cardId: string | null) {
   });
 }
 
+export interface CardBalance {
+  request_id: string;
+  card_id: string;
+  cardholder_name: string;
+  card_type: string;
+  last_four: string | null;
+  currency: string;
+  status: string;
+  spending_limit: number | null;
+  spending_interval: string | null;
+  spent: number;
+  remaining: number | null;
+  error: string | null;
+}
+
+export interface IssuingBalances {
+  issuing_balance: { amount: number; currency: string }[];
+  cards: CardBalance[];
+}
+
+/** Remaining spendable amount per issued Stripe card plus the funding balance. */
+export function useIssuingBalances(enabled: boolean) {
+  return useQuery({
+    queryKey: ['stripe-issuing', 'balances'],
+    queryFn: () => invoke<IssuingBalances>({ action: 'balances' }),
+    enabled,
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
+/** Set the spending limit that defines how much a card has left. */
+export function useSetCardSpendingLimit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: {
+      card_id: string;
+      amount: number;
+      interval: 'per_authorization' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'all_time';
+    }) => invoke<{ success: boolean }>({ action: 'set_spending_limit', ...payload }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stripe-issuing', 'balances'] });
+    },
+  });
+}
+
 /** Freeze, unfreeze or cancel an issued Stripe card. */
 export function useSetStripeCardStatus() {
   const queryClient = useQueryClient();
