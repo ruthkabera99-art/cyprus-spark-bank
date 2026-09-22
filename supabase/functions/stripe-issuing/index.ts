@@ -176,6 +176,93 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (body.action === 'balances') {
+      const balance = await stripe('/balance', stripeKey);
+      const issuingBalance = (balance.issuing as { available?: Array<Record<string, unknown>> } | undefined)?.available ?? [];
+
+      const { data: issuedRequests } = await admin
+        .from('card_requests')
+        .select('id, cardholder_name, card_type, issued_reference, issued_last_four, issued_at')
+        .not('issued_reference', 'is', null)
+        .eq('status', 'issued')
+        .order('issued_at', { ascending: false })
+        .limit(50);
+
+      const liveRequests = (issuedRequests ?? []).filter((request) =>
+        typeof request.issued_reference === 'string' && request.issued_reference.startsWith('ic_'),
+      );
+
+      const cards = await Promise.all(liveRequests.map(async (request) => {
+        const cardId = String(request.issued_reference);
+        try {
+          const card = await stripe(`/issuing/cards/${cardId}`, stripeKey);
+          const controls = card.spending_controls as { spending_limits?: Array<Record<string, unknown>> } | undefined;
+          const limitEntry = controls?.spending_limits?.[0];
+          const limit = limitEntry ? Number(limitEntry.amount ?? 0) : null;
+          const interval = limitEntry ? String(limitEntry.interval ?? 'all_time') : null;
+
+          const transactions = await stripe(
+            `/issuing/transactions?card=${encodeURIComponent(cardId)}&limit=100`,
+            stripeKey,
+          );
+          const rows = Array.isArray(transactions.data) ? transactions.data : [];
+          const spent = rows.reduce((total, item) => {
+            const amount = Number((item as Record<string, unknown>).amount ?? 0);
+            return amount < 0 ? total + Math.abs(amount) : total - amount;
+          }, 0);
+
+          return {
+            request_id: request.id,
+            card_id: cardId,
+            cardholder_name: request.cardholder_name,
+            card_type: request.card_type,
+            last_four: request.issued_last_four,
+            currency: String(card.currency ?? 'usd'),
+            status: String(card.status ?? 'unknown'),
+            spending_limit: limit,
+            spending_interval: interval,
+            spent: Math.max(spent, 0),
+            remaining: limit === null ? null : Math.max(limit - Math.max(spent, 0), 0),
+            error: null as string | null,
+          };
+        } catch (error) {
+          return {
+            request_id: request.id,
+            card_id: cardId,
+            cardholder_name: request.cardholder_name,
+            card_type: request.card_type,
+            last_four: request.issued_last_four,
+            currency: 'usd',
+            status: 'unknown',
+            spending_limit: null,
+            spending_interval: null,
+            spent: 0,
+            remaining: null,
+            error: error instanceof Error ? error.message : 'Could not load this card',
+          };
+        }
+      }));
+
+      return json({
+        issuing_balance: issuingBalance.map((entry) => ({
+          amount: Number(entry.amount ?? 0),
+          currency: String(entry.currency ?? 'usd'),
+        })),
+        cards,
+      });
+    }
+
+    if (body.action === 'set_spending_limit') {
+      const updated = await stripe(`/issuing/cards/${body.card_id}`, stripeKey, {
+        method: 'POST',
+        body: form({
+          'spending_controls[spending_limits][0][amount]': String(body.amount),
+          'spending_controls[spending_limits][0][interval]': body.interval,
+        }),
+      });
+      return json({ success: true, card_id: String(updated.id) });
+    }
+
     if (body.action === 'issue') {
       const { data: cardRequest, error: requestError } = await admin
         .from('card_requests')
