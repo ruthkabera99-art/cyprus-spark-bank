@@ -26,6 +26,7 @@ const RequestSchema = z.discriminatedUnion('action', [
     card_id: z.string().startsWith('ic_'),
   }),
   z.object({ action: z.literal('balances') }),
+  z.object({ action: z.literal('charges') }),
   z.object({
     action: z.literal('set_spending_limit'),
     card_id: z.string().startsWith('ic_'),
@@ -171,6 +172,36 @@ Deno.serve(async (req) => {
             merchant_name: String(merchant?.name ?? 'Card purchase'),
             merchant_city: merchant?.city ? String(merchant.city) : null,
             merchant_country: merchant?.country ? String(merchant.country) : null,
+          };
+        }),
+      });
+    }
+
+    if (body.action === 'charges') {
+      const { data: issued } = await admin
+        .from('card_requests')
+        .select('cardholder_name, issued_reference, issued_last_four')
+        .like('issued_reference', 'ic_%');
+      const byCard = new Map((issued ?? []).map((r) => [String(r.issued_reference), r]));
+      const list = await stripe('/issuing/transactions?limit=100', stripeKey);
+      const rows = Array.isArray(list.data) ? list.data : [];
+      return json({
+        charges: rows.map((item) => {
+          const t = item as Record<string, unknown>;
+          const m = t.merchant_data as Record<string, unknown> | undefined;
+          const cardId = typeof t.card === 'string' ? t.card : String((t.card as { id?: string })?.id ?? '');
+          const linked = byCard.get(cardId);
+          return {
+            id: String(t.id ?? ''),
+            card_id: cardId,
+            cardholder_name: linked?.cardholder_name ?? 'Unlinked card',
+            last_four: linked?.issued_last_four ?? null,
+            amount: Number(t.amount ?? 0),
+            currency: String(t.currency ?? 'usd'),
+            created: Number(t.created ?? 0),
+            type: String(t.type ?? 'capture'),
+            merchant_name: String(m?.name ?? 'Card purchase'),
+            merchant_city: m?.city ? String(m.city) : null,
           };
         }),
       });

@@ -118,6 +118,30 @@ export function useIssuingBalances(enabled: boolean) {
   });
 }
 
+export interface CardCharge {
+  id: string;
+  card_id: string;
+  cardholder_name: string;
+  last_four: string | null;
+  amount: number;
+  currency: string;
+  created: number;
+  type: string;
+  merchant_name: string;
+  merchant_city: string | null;
+}
+
+/** Every real charge recorded on issued Stripe cards (latest 100). */
+export function useIssuingCharges(enabled: boolean) {
+  return useQuery({
+    queryKey: ['stripe-issuing', 'charges'],
+    queryFn: () => invoke<{ charges: CardCharge[] }>({ action: 'charges' }),
+    enabled,
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
 /** Set the spending limit that defines how much a card has left. */
 export function useSetCardSpendingLimit() {
   const queryClient = useQueryClient();

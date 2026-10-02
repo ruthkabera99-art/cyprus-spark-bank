@@ -25,6 +25,7 @@ import { UsersManagement } from '@/components/admin/UsersManagement';
 import { TransactionsManagement } from '@/components/admin/TransactionsManagement';
 import { CryptoManagement } from '@/components/admin/CryptoManagement';
 import { CardRequestsManagement } from '@/components/admin/CardRequestsManagement';
+import { CardBalancesTab } from '@/components/admin/CardBalancesTab';
 import { ActivityLogTab } from '@/components/admin/ActivityLogTab';
 import { SeoVerification } from '@/components/admin/SeoVerification';
 import { SiteSettingsPanel } from '@/components/admin/SiteSettingsPanel';
@@ -493,6 +494,7 @@ export default function AdminDashboard() {
         {activeTab === 'transactions' && <TransactionsManagement />}
         {activeTab === 'crypto' && <CryptoManagement />}
         {activeTab === 'cards' && <CardRequestsManagement />}
+        {activeTab === 'balances' && <CardBalancesTab />}
         {activeTab === 'chat' && <ChatManagement />}
         {activeTab === 'activity' && <ActivityLogTab />}
         {activeTab === 'seo' && <SeoVerification />}

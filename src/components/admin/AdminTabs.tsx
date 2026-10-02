@@ -12,7 +12,7 @@ interface AdminTabsProps {
 export function AdminTabs({ activeTab, onTabChange, unreadChatCount = 0 }: AdminTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-10">
+      <TabsList className="grid w-full grid-cols-11">
         <TabsTrigger value="loans" className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
           <span className="hidden sm:inline">Loans</span>
@@ -36,6 +36,10 @@ export function AdminTabs({ activeTab, onTabChange, unreadChatCount = 0 }: Admin
         <TabsTrigger value="cards" className="flex items-center gap-2">
           <IdCard className="h-4 w-4" />
           <span className="hidden sm:inline">Cards</span>
+        </TabsTrigger>
+        <TabsTrigger value="balances" className="flex items-center gap-2">
+          <Wallet className="h-4 w-4" />
+          <span className="hidden sm:inline">Balances</span>
         </TabsTrigger>
         <TabsTrigger 
           value="chat" 
