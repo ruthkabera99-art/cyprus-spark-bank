@@ -34,6 +34,7 @@ import {
   useIssuingStatus,
   useIssuingBalances,
   useSetCardSpendingLimit,
+  useIssuingCharges,
   type CardBalance,
 } from '@/hooks/useStripeIssuing';
 
@@ -55,6 +56,7 @@ export function CardBalancesTab() {
   const status = useIssuingStatus();
   const connected = Boolean(status.data?.configured);
   const balances = useIssuingBalances(connected);
+  const charges = useIssuingCharges(connected);
   const setLimit = useSetCardSpendingLimit();
 
   const [editing, setEditing] = useState<CardBalance | null>(null);
@@ -205,6 +207,55 @@ export function CardBalancesTab() {
             </div>
           ) : (
             <p className="py-8 text-center text-sm text-muted-foreground">No live issued cards yet.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Card charges log</CardTitle>
+          <CardDescription>Every real purchase or refund made on an issued card.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {charges.isLoading ? (
+            <Skeleton className="h-40 w-full" />
+          ) : charges.isError ? (
+            <p className="flex items-center gap-2 py-8 text-sm text-destructive">
+              <AlertTriangle className="h-4 w-4" />
+              {charges.error instanceof Error ? charges.error.message : 'Could not load charges.'}
+            </p>
+          ) : charges.data?.charges.length ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>When</TableHead>
+                    <TableHead>Cardholder</TableHead>
+                    <TableHead>Card</TableHead>
+                    <TableHead>Merchant</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {charges.data.charges.map((c) => (
+                    <TableRow key={c.id}>
+                      <TableCell className="text-sm">{new Date(c.created * 1000).toLocaleString()}</TableCell>
+                      <TableCell>{c.cardholder_name}</TableCell>
+                      <TableCell className="font-mono text-sm">•••• {c.last_four ?? '????'}</TableCell>
+                      <TableCell>
+                        <div>{c.merchant_name}</div>
+                        {c.merchant_city && <div className="text-xs text-muted-foreground">{c.merchant_city}</div>}
+                      </TableCell>
+                      <TableCell><Badge variant="outline" className="capitalize">{c.type}</Badge></TableCell>
+                      <TableCell className="text-right font-mono">{money(Math.abs(c.amount), c.currency)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">No charges on issued cards yet.</p>
           )}
         </CardContent>
       </Card>
