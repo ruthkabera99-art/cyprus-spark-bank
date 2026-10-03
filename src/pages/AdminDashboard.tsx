@@ -29,6 +29,7 @@ import { CardBalancesTab } from '@/components/admin/CardBalancesTab';
 import { ActivityLogTab } from '@/components/admin/ActivityLogTab';
 import { SeoVerification } from '@/components/admin/SeoVerification';
 import { SiteSettingsPanel } from '@/components/admin/SiteSettingsPanel';
+import { SiteContentPanel } from '@/components/admin/SiteContentPanel';
 import { LoanPaymentsManagement } from '@/components/admin/LoanPaymentsManagement';
 import { ChatManagement } from '@/components/admin/ChatManagement';
 import { LoanStatusBadge } from '@/components/admin/LoanStatusBadge';
@@ -498,7 +499,7 @@ export default function AdminDashboard() {
         {activeTab === 'chat' && <ChatManagement />}
         {activeTab === 'activity' && <ActivityLogTab />}
         {activeTab === 'seo' && <SeoVerification />}
-        {activeTab === 'settings' && <SiteSettingsPanel />}
+        {activeTab === 'settings' && (<div className="space-y-6"><SiteContentPanel /><SiteSettingsPanel /></div>)}
       </main>
       <Footer />
 

@@ -1,8 +1,10 @@
-import { Phone, Mail, Lock, Shield } from 'lucide-react';
+import { Phone, Mail, Lock } from 'lucide-react';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { useSiteContent } from '@/hooks/useSiteContent';
 
 export function TopBar() {
   const { data: settings } = useSiteSettings();
+  const content = useSiteContent();
   const phone = settings?.contact_phone ?? '+1 (800) 123-4567';
   const email = settings?.contact_email ?? 'support@morganfinancebank.com';
   const telHref = `tel:${phone.replace(/[^+\d]/g, '')}`;
@@ -23,11 +25,7 @@ export function TopBar() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5 opacity-70">
             <Lock className="w-3 h-3 text-success" />
-            <span>SSL Encrypted</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-1.5 opacity-70">
-            <Shield className="w-3 h-3 text-success" />
-            <span>FDIC Insured</span>
+            <span>{content.topbar_badge}</span>
           </div>
         </div>
       </div>

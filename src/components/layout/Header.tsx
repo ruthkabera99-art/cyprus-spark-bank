@@ -1,3 +1,4 @@
+import { useSiteContent } from '@/hooks/useSiteContent';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Shield, User, LogOut } from 'lucide-react';
@@ -25,6 +26,7 @@ const navItems = [
 ];
 
 export function Header() {
+  const content = useSiteContent();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const { user, isAuthenticated, signOut } = useAuth();
@@ -51,8 +53,8 @@ export function Header() {
               <Shield className="w-7 h-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-serif font-bold text-foreground">MorganFinance Bank</h1>
-              <p className="text-xs text-muted-foreground">Trust & Innovation</p>
+              <h1 className="text-xl font-serif font-bold text-foreground">{content.brand_name}</h1>
+              <p className="text-xs text-muted-foreground">{content.brand_tagline}</p>
             </div>
           </Link>
 

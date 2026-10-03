@@ -1,13 +1,20 @@
 import { Link } from 'react-router-dom';
-import { Shield, Phone, Mail, MapPin, Facebook, Twitter, Linkedin, Instagram, Lock, BadgeCheck } from 'lucide-react';
+import { Shield, Phone, Mail, MapPin, Facebook, Twitter, Linkedin, Instagram, Lock } from 'lucide-react';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { useSiteContent } from '@/hooks/useSiteContent';
 
 export function Footer() {
   const { data: settings } = useSiteSettings();
   const phone = settings?.contact_phone ?? '+1 (800) 123-4567';
   const email = settings?.contact_email ?? 'support@morganfinancebank.com';
   const address = settings?.contact_address ?? '123 Financial District, Banking Tower, City Center';
-  const nmls = settings?.nmls_number ?? '123456';
+  const content = useSiteContent();
+  const socials = [
+    { href: content.social_facebook, label: 'Facebook', Icon: Facebook },
+    { href: content.social_twitter, label: 'Twitter', Icon: Twitter },
+    { href: content.social_linkedin, label: 'LinkedIn', Icon: Linkedin },
+    { href: content.social_instagram, label: 'Instagram', Icon: Instagram },
+  ].filter((x) => x.href.trim());
   return (
     <footer className="bg-foreground text-background">
       <div className="container mx-auto px-4 py-16">
@@ -19,27 +26,22 @@ export function Footer() {
                 <Shield className="w-7 h-7 text-primary-foreground" />
               </div>
               <div>
-                <h2 className="text-xl font-serif font-bold">MorganFinance Bank</h2>
-                <p className="text-xs opacity-70">Trust & Innovation</p>
+                <h2 className="text-xl font-serif font-bold">{content.brand_name}</h2>
+                <p className="text-xs opacity-70">{content.brand_tagline}</p>
               </div>
             </div>
             <p className="text-sm opacity-80 leading-relaxed">
-              Your trusted partner in banking for over 50 years. We provide secure, innovative financial solutions for individuals and businesses.
+              {content.footer_about}
             </p>
-            <div className="flex gap-4 mt-6">
-              <a href="#" aria-label="Facebook" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" aria-label="Twitter" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" aria-label="LinkedIn" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
-                <Linkedin className="w-5 h-5" />
-              </a>
-              <a href="#" aria-label="Instagram" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
-                <Instagram className="w-5 h-5" />
-              </a>
-            </div>
+            {socials.length > 0 && (
+              <div className="flex gap-4 mt-6">
+                {socials.map(({ href, label, Icon }) => (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
+                    <Icon className="w-5 h-5" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Links */}
@@ -76,9 +78,6 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
-              <li className="text-sm opacity-80">FDIC Member Institution</li>
-              <li className="text-sm opacity-80">Equal Housing Lender</li>
-              <li className="text-sm opacity-80">NMLS# {nmls}</li>
             </ul>
           </div>
 
@@ -106,10 +105,6 @@ export function Footer() {
                 <Lock className="w-3.5 h-3.5" />
                 <span>SSL Secured</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs opacity-60">
-                <BadgeCheck className="w-3.5 h-3.5" />
-                <span>PCI DSS</span>
-              </div>
             </div>
           </div>
         </div>
@@ -117,7 +112,7 @@ export function Footer() {
         <div className="border-t border-background/20 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm opacity-60">
-              © {new Date().getFullYear()} MorganFinance Bank. All rights reserved. FDIC Insured. Equal Housing Lender.
+              © {new Date().getFullYear()} {content.footer_copyright}
             </p>
             <div className="flex gap-6">
               <Link to="/privacy" className="text-sm opacity-60 hover:opacity-100 transition-opacity">Privacy Policy</Link>
