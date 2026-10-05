@@ -14,6 +14,7 @@ import { FAQSection } from '@/components/home/FAQSection';
 import { DisclaimerSection } from '@/components/home/DisclaimerSection';
 import { CTASection } from '@/components/home/CTASection';
 import { DownloadAppSection } from '@/components/home/DownloadAppSection';
+import { useSiteContent, isOn } from '@/hooks/useSiteContent';
 
 const faqs = [
   { q: 'Is my money safe with MorganFinance Bank?', a: 'We use 256-bit SSL encryption, multi-factor authentication, and real-time account alerts.' },
@@ -55,6 +56,7 @@ const servicesJsonLd = {
 };
 
 const Index = () => {
+  const c = useSiteContent();
   return (
     <div className="min-h-screen bg-background">
       <SEO
@@ -67,17 +69,17 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
-        <PaymentPartnersSection />
-        <HowItWorksSection />
-        <ServicesSection />
-        <FeaturesSection />
-        <StatsSection />
-        <TrustBadgesSection />
-        <TestimonialsSection />
-        <FAQSection />
-        <DownloadAppSection />
-        <CTASection />
-        <DisclaimerSection />
+        {isOn(c.section_partners) && <PaymentPartnersSection />}
+        {isOn(c.section_how) && <HowItWorksSection />}
+        {isOn(c.section_services) && <ServicesSection />}
+        {isOn(c.section_features) && <FeaturesSection />}
+        {isOn(c.section_stats) && <StatsSection />}
+        {isOn(c.section_trust) && <TrustBadgesSection />}
+        {isOn(c.section_testimonials) && <TestimonialsSection />}
+        {isOn(c.section_faq) && <FAQSection />}
+        {isOn(c.section_download) && <DownloadAppSection />}
+        {isOn(c.section_cta) && <CTASection />}
+        {isOn(c.section_disclaimer) && <DisclaimerSection />}
       </main>
       <Footer />
     </div>
