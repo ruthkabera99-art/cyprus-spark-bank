@@ -55,7 +55,7 @@ const team = [
   {
     name: 'Emily Chang',
     role: 'Chief Compliance Officer',
-    bio: '20 years in banking regulation and compliance. Former examiner at FDIC. Juris Doctor from Columbia Law School.',
+    bio: '20 years in banking regulation and compliance. Juris Doctor from Columbia Law School.',
     initials: 'EC',
   },
 ];
@@ -70,7 +70,7 @@ const About = () => {
     <div className="min-h-screen bg-background">
       <SEO
         title="About MorganFinance Bank — Our Story & Mission"
-        description="Founded in 1974, MorganFinance Bank serves 2M+ customers with trusted, customer-centric digital banking and financial services."
+        description="MorganFinance Bank provides trusted, customer-centric digital banking and financial services."
         path="/about"
       />
       <Header />
@@ -83,7 +83,7 @@ const About = () => {
                 About MorganFinance Bank
               </h1>
               <p className="text-lg text-muted-foreground">
-                For over 50 years, we've been committed to providing exceptional banking services built on trust, innovation, and customer focus.
+                We are committed to providing exceptional banking services built on trust, innovation, and customer focus.
               </p>
             </div>
           </div>
@@ -181,16 +181,16 @@ const About = () => {
         <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-2xl mx-auto mb-10">
-              <h2 className="text-3xl font-serif font-bold mb-4">Regulatory Compliance</h2>
+              <h2 className="text-3xl font-serif font-bold mb-4">Our Commitments</h2>
               <p className="text-muted-foreground text-sm">
-                MorganFinance Bank operates under full regulatory oversight and maintains the highest compliance standards.
+                MorganFinance Bank is committed to secure and transparent banking.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               {[
-                { title: 'FDIC Member', desc: 'Deposits insured up to $250,000 per depositor.' },
-                { title: 'NMLS# 123456', desc: 'Registered with Nationwide Multistate Licensing System.' },
-                { title: 'Equal Housing Lender', desc: 'We comply with all fair lending laws and regulations.' },
+                { title: 'Data Protection', desc: 'Encryption and strict access controls protect your information.' },
+                { title: 'Identity Checks', desc: 'Customer verification on account opening.' },
+                { title: 'Clear Terms', desc: 'Fees and loan terms are shown before you agree.' },
               ].map((item) => (
                 <div key={item.title} className="bg-card rounded-xl p-6 border border-border text-center">
                   <Shield className="w-8 h-8 text-primary mx-auto mb-3" />

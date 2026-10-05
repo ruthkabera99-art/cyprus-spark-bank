@@ -69,7 +69,7 @@ const Register = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex">
       <SEO
         title="Open an Account | MorganFinance Bank"
-        description="Open a free FDIC-insured personal or business account with MorganFinance Bank in under 10 minutes."
+        description="Open a free personal or business account with MorganFinance Bank in under 10 minutes."
         path="/register"
       />
       {/* Left Side - Decorative */}
@@ -85,7 +85,7 @@ const Register = () => {
             {[
               'No monthly maintenance fees',
               'Free online and mobile banking',
-              'FDIC insured up to $250,000',
+              'Bank-grade encryption',
               '24/7 customer support',
               'Competitive interest rates',
             ].map((benefit) => (

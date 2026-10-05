@@ -27,15 +27,15 @@ export function PaymentPartnersSection() {
           <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Lock className="w-3.5 h-3.5 text-success" />
-              <span>PCI DSS Level 1</span>
+              <span>256-bit Encryption</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Shield className="w-3.5 h-3.5 text-success" />
-              <span>SOC 2 Certified</span>
+              <span>Multi-factor Login</span>
             </div>
             <div className="flex items-center gap-1.5">
               <BadgeCheck className="w-3.5 h-3.5 text-success" />
-              <span>AML Compliant</span>
+              <span>Identity Checks</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CreditCard className="w-3.5 h-3.5 text-success" />

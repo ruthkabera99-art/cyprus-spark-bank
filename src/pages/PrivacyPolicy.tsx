@@ -48,7 +48,7 @@ const PrivacyPolicy = () => {
 
             <section>
               <h2 className="text-xl font-serif font-semibold text-foreground mb-3">4. Data Security</h2>
-              <p>We employ 256-bit SSL encryption, multi-factor authentication, SOC 2 Type II certified infrastructure, and regular penetration testing to protect your data. Access to personal information is restricted to authorized personnel on a need-to-know basis.</p>
+              <p>We employ 256-bit SSL encryption, multi-factor authentication, and regular penetration testing to protect your data. Access to personal information is restricted to authorized personnel on a need-to-know basis.</p>
             </section>
 
             <section>

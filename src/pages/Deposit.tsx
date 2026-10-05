@@ -412,7 +412,7 @@ const Deposit = () => {
 
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Lock className="h-3.5 w-3.5 text-green-500" />
-                    <span>Secured with 256-bit SSL encryption • PCI DSS Level 1 compliant</span>
+                    <span>Secured with 256-bit SSL encryption</span>
                   </div>
 
                   <Button onClick={handleCreditCardDeposit} className="w-full" disabled={isProcessing}>

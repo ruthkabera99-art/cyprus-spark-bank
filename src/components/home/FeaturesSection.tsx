@@ -23,8 +23,8 @@ const features = [
   },
   {
     icon: Lock,
-    title: 'FDIC Insured',
-    description: 'Your deposits are insured up to $250,000 by the FDIC.',
+    title: 'Account Protection',
+    description: 'Encryption, login verification and activity alerts.',
   },
   {
     icon: Headphones,
@@ -42,7 +42,7 @@ export function FeaturesSection() {
             Why 2 Million Customers Bank with MorganFinance
           </h2>
           <p className="text-muted-foreground">
-            FDIC-insured accounts, 256-bit encryption, and 24/7 support — everything you need for confident personal and business banking in one place.
+            Secure accounts, 256-bit encryption, and 24/7 support — everything you need for confident personal and business banking in one place.
           </p>
         </div>
 
