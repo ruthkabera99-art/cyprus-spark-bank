@@ -9,7 +9,7 @@ import { useSiteSettings } from '@/hooks/useSiteSettings';
 const buildFaqs = (s: { phone: string; email: string; address: string; hours: string }) => [
   {
     question: 'Is my money safe with MorganFinance Bank?',
-    answer: 'Yes. All deposits are FDIC insured up to $250,000 per depositor, per ownership category. We use 256-bit SSL encryption, multi-factor authentication, and undergo regular SOC 2 Type II security audits. Your funds are protected by the same standards used by the largest financial institutions.',
+    answer: 'We use 256-bit SSL encryption, multi-factor authentication, and undergo regular SOC 2 Type II security audits. Your funds are protected by the same standards used by the largest financial institutions.',
   },
   {
     question: 'What fees should I expect?',

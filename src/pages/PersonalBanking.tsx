@@ -34,7 +34,7 @@ const PersonalBanking = () => {
     <div className="min-h-screen bg-background">
       <SEO
         title="Personal Banking — Checking, Savings & Cards | MorganFinance"
-        description="Personal checking & savings with no monthly fees, 2.5% APY, free debit cards, and premium credit cards. FDIC-insured."
+        description="Personal checking & savings with no monthly fees, 2.5% APY, free debit cards, and premium credit cards."
         path="/personal"
       />
       <Header />

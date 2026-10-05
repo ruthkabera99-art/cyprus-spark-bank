@@ -3,8 +3,8 @@ import { Shield, Lock, Award, BadgeCheck, FileCheck, CreditCard } from 'lucide-r
 const badges = [
   {
     icon: Shield,
-    title: 'FDIC Insured',
-    description: 'Deposits insured up to $250,000 per depositor',
+    title: 'Multi-factor Login',
+    description: 'Extra verification protects account access',
   },
   {
     icon: Lock,
@@ -13,23 +13,23 @@ const badges = [
   },
   {
     icon: BadgeCheck,
-    title: 'SOC 2 Type II Certified',
-    description: 'Independently audited security controls',
+    title: 'Activity Monitoring',
+    description: 'Real-time alerts on account activity',
   },
   {
     icon: FileCheck,
-    title: 'AML/KYC Compliant',
-    description: 'Full anti-money laundering compliance',
+    title: 'Identity Verification',
+    description: 'Customer checks on account opening',
   },
   {
     icon: Award,
-    title: 'PCI DSS Level 1',
-    description: 'Highest level of payment card security',
+    title: 'Admin-reviewed Transfers',
+    description: 'Transactions reviewed before completion',
   },
   {
     icon: CreditCard,
-    title: 'Verified Payment Gateway',
-    description: 'Secure, PCI-compliant transaction processing',
+    title: 'Secure Payments',
+    description: 'Encrypted transaction processing',
   },
 ];
 
@@ -42,7 +42,7 @@ export function TrustBadgesSection() {
             Your Security Is Our Priority
           </h2>
           <p className="text-muted-foreground text-sm max-w-xl mx-auto">
-            We adhere to the highest industry standards to protect your financial data and transactions.
+            We use layered security to protect your financial data and transactions.
           </p>
         </div>
 

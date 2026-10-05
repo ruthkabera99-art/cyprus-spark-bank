@@ -1,8 +1,8 @@
 # MorganFinance Bank
 
-> FDIC-insured digital banking offering personal accounts, business banking, collateral-backed loans (including crypto collateral), and secure online transactions.
+> Digital banking offering personal accounts, business banking, collateral-backed loans (including crypto collateral), and secure online transactions.
 
-MorganFinance Bank is a digital-first US bank serving 2M+ customers since 1974. We provide checking and savings accounts, wire and international (SWIFT/BIC) transfers, deposits via bank, card and digital wallets, and loans secured by real estate, vehicles, equipment, or cryptocurrency. The platform features bank-grade 256-bit encryption, multi-factor authentication, real-time notifications, and 24/7 customer support with AI-assisted chat.
+MorganFinance Bank is a digital-first US bank. We provide checking and savings accounts, wire and international (SWIFT/BIC) transfers, deposits via bank, card and digital wallets, and loans secured by real estate, vehicles, equipment, or cryptocurrency. The platform features bank-grade 256-bit encryption, multi-factor authentication, real-time notifications, and 24/7 customer support with AI-assisted chat.
 
 ## Pages
 
