@@ -73,10 +73,6 @@ export function ServicesSection() {
               <span className="text-[#c9a84c] font-bold text-2xl">98%</span>
               <span className="text-[#064e3b]/60 text-xs uppercase tracking-tight">Client Retention</span>
             </div>
-            <div className="flex flex-col">
-              <span className="text-[#c9a84c] font-bold text-2xl">2M+</span>
-              <span className="text-[#064e3b]/60 text-xs uppercase tracking-tight">Trusted Clients</span>
-            </div>
           </div>
 
           <div className="bg-[#c9a84c]/10 px-8 py-6 rounded-2xl border-l-4 border-[#c9a84c] flex items-center justify-between gap-8 w-full md:w-auto">

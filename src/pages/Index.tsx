@@ -16,7 +16,7 @@ import { CTASection } from '@/components/home/CTASection';
 import { DownloadAppSection } from '@/components/home/DownloadAppSection';
 
 const faqs = [
-  { q: 'Is my money safe with MorganFinance Bank?', a: 'We use 256-bit SSL encryption, multi-factor authentication, and undergo regular SOC 2 Type II security audits.' },
+  { q: 'Is my money safe with MorganFinance Bank?', a: 'We use 256-bit SSL encryption, multi-factor authentication, and real-time account alerts.' },
   { q: 'What fees should I expect?', a: 'Our personal checking account has no monthly maintenance fee. Wire transfer fees, ATM fees, and other service charges are clearly disclosed in our fee schedule before you open an account.' },
   { q: 'How do collateral-backed loans work?', a: 'You pledge an asset (real estate, vehicle, equipment, or cryptocurrency) as collateral to secure a loan, allowing lower interest rates than unsecured loans. Loan-to-value and terms depend on the collateral.' },
   { q: 'How long does it take to open an account?', a: 'Online account opening typically takes under 10 minutes. You will need a valid government-issued ID and your Social Security number. Most accounts are approved instantly.' },

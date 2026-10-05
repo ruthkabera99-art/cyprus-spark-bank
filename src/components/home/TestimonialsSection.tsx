@@ -18,7 +18,7 @@ const testimonials = [
     name: 'David Chen',
     role: 'Software Engineer',
     location: 'San Francisco, CA',
-    text: 'I switched to MorganFinance for the security features and stayed for the service. The 24/7 support team resolved my issue within minutes. My deposits are FDIC insured, which gives me real peace of mind.',
+    text: 'I switched to MorganFinance for the security features and stayed for the service. The 24/7 support team resolved my issue within minutes.',
     rating: 5,
     years: 'Customer since 2020',
     avatar: 'https://i.pravatar.cc/160?img=12',
@@ -195,11 +195,6 @@ export function TestimonialsSection() {
           <div>
             <div className="text-3xl font-serif font-bold text-foreground">4.9/5</div>
             <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Avg. Rating</div>
-          </div>
-          <div className="h-10 w-px bg-border hidden sm:block" />
-          <div>
-            <div className="text-3xl font-serif font-bold text-foreground">2M+</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Customers</div>
           </div>
           <div className="h-10 w-px bg-border hidden sm:block" />
           <div>
